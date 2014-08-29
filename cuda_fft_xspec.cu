@@ -45,6 +45,14 @@ main(
 	cufftComplex	*cuSpecData;		// FFTed spectrum, every IF, every segment
 	float			*cuPowerSpec;		// (autocorrelation) Power Spectrum
 	float2			*cuXSpec;
+	int				modeSW = 0;
+
+	//-------- Pointer to functions
+ 	void	(*segform[4])( unsigned char *, float *, int);
+ 	segform[0] = segform_2st_2bit;
+ 	segform[1] = segform_4st_2bit;
+ 	segform[2] = segform_8st_2bit;
+ 	segform[3] = segform_16st_2bit;
 
 //------------------------------------------ Access to the SHARED MEMORY
 	shrd_param_id = shmget( SHM_PARAM_KEY, sizeof(struct SHM_PARAM), 0444);
@@ -52,6 +60,12 @@ main(
 	vdifhead_ptr = (unsigned char *)shmat(param_ptr->shrd_vdifhead_id, NULL, SHM_RDONLY);
 	vdifdata_ptr = (unsigned char *)shmat(param_ptr->shrd_vdifdata_id, NULL, SHM_RDONLY);
 	xspec_ptr  = (float *)shmat(param_ptr->shrd_xspec_id, NULL, 0);
+	switch( param_ptr->num_st ){
+ 		case  2 :	modeSW = 0; break;
+ 		case  4 :	modeSW = 1; break;
+ 		case  8 :	modeSW = 2; break;
+ 		case 16 :	modeSW = 3; break;
+ 	}
 //------------------------------------------ Prepare for CuFFT
 	cudaMalloc( (void **)&cuvdifdata_ptr, MAX_SAMPLE_BUF);
 	cudaMalloc( (void **)&cuRealData, NST* NsegPart* NFFT * sizeof(cufftReal) );
@@ -85,10 +99,12 @@ main(
 		// memset(bitDist, 0, sizeof(bitDist));
 
 		//-------- Wait for the first half in the S-part
-		sops.sem_num = (ushort)1; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
+		//sops.sem_num = (ushort)(param_ptr->part_index); sops.sem_op = (short)-1; sops.sem_flg = (short)0;
+		sops.sem_num = (ushort)(1); sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
+		usleep(1000);	// Wait 1 msec
+		// StartTimer();
 		// printf("Ready to process Part=%d Cycle=%d Page=%d\n", param_ptr->part_index, cycle_index, page_index);
-		StartTimer();
 
 		//-------- SHM -> GPU memory transfer
 		cudaMemcpy( &cuvdifdata_ptr[HALFBUF* page_index], &vdifdata_ptr[HALFBUF* page_index], HALFBUF, cudaMemcpyHostToDevice);
@@ -97,10 +113,7 @@ main(
 		Dg.x=NFFT/512; Dg.y=1; Dg.z=1;
 		for(index=0; index < NsegPart; index ++){
 			seg_index = page_index* NsegPart + index;
-			segform_16st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
-			// segform_8st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
-			// segform_4st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
-			// segform_2st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
+			(*segform[modeSW])<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);
 		}
 
 		//-------- FFT Real -> Complex spectrum
@@ -118,7 +131,6 @@ main(
 
 		//-------- Dump cross spectra to shared memory
 		if( param_ptr->part_index == 7){
-			// scalePowerSpec<<<Dg, Db>>>(cuPowerSpec, SCALEFACT, NST* NFFT2);
 			cudaMemcpy(xspec_ptr, cuPowerSpec, NST* NFFT2* sizeof(float), cudaMemcpyDeviceToHost);
 			sops.sem_num = (ushort)SEM_FX; sops.sem_op = (short)1; sops.sem_flg = (short)0; semop( param_ptr->sem_data_id, &sops, 1);
 		}
@@ -132,7 +144,7 @@ main(
 		// }
 		// printf("\n");
 			
-		printf("%lf [msec]\n", GetTimer());
+		// printf("%lf [msec]\n", GetTimer());
 		param_ptr->current_rec ++;
 
 	}	// End of part loop
