@@ -42,6 +42,14 @@ main(
 	addr.sin_addr.s_addr    = INADDR_ANY;
 	bind(sock, (struct sockaddr *)&addr, sizeof(addr));
 	memset(buf, 0, sizeof(buf));
+    //-------- Multicast
+	// memset(&mreq, 0, sizeof(mreq));
+	// mreq.imr_interface.s_addr = INADDR_ANY;
+	// mreq.imr_multiaddr.s_addr = inet_addr("239.192.1.2");
+	// if (setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *)&mreq, sizeof(mreq)) != 0){
+	// 	perror(" Error: setsockopt");
+	// 	return(-1);
+	// }
 //------------------------------------------ Access to the SHARED MEMORY
     //-------- SHARED PARAMETERS --------
     if(shm_access(

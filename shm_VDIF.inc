@@ -10,6 +10,12 @@
 #include <sys/sem.h>
 #include <sys/msg.h>
 
+//-------- VDIF 
+union VDIF32byte{
+	int				int_buf[8];	
+	unsigned char	chr_buf[32];
+};
+
 //-------- Shared Memory
 #define	SEM_DATA_KEY	0x2000
 #define	SHM_PARAM_KEY	0x1000
@@ -23,8 +29,8 @@
 #define	VDIF_SIZE		1312		// 1312 bytes = Header (32 bytes) + Data (1280 bytes)
 #define	VDIFHEAD_SIZE	32			// VDIF Header size
 #define	VDIFDATA_SIZE	1280		// VDIF Header size
-#define	MAX_SAMPLE_BUF	32000000	// 32 MB (1/4 sec for 1 Gbps)
-#define	HALFBUF			16000000	// 16 MB per 1/8 sec
+#define	MAX_SAMPLE_BUF	33554432	// 32 MB (1/4 sec for 1 Gbps)
+#define	HALFBUF			16777216	// 16 MB per 1/8 sec
 #define FramePerSec		  100000	// 128 MB/sec / (1280 bytes/frame) = 100000 frame per sec
 #define FramePerPage	   25000	// 100000 frame/sec / 4 page/sec =  25000 frame/page
 #define FramePerPart	   12500	// 25000 frame/page / 2 part/page=  12500 frame/part

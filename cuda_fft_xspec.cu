@@ -97,8 +97,10 @@ main(
 		Dg.x=NFFT/512; Dg.y=1; Dg.z=1;
 		for(index=0; index < NsegPart; index ++){
 			seg_index = page_index* NsegPart + index;
-			segform_16st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[4* offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 4 bytes per sample
-			// segform_8st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[2* offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 4 bytes per sample
+			segform_16st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
+			// segform_8st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
+			// segform_4st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
+			// segform_2st_2bit<<<Dg, Db>>>( &cuvdifdata_ptr[offset[seg_index]], &cuRealData[index* NST* NFFT], NFFT);	// 
 		}
 
 		//-------- FFT Real -> Complex spectrum

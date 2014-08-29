@@ -42,10 +42,12 @@ int	cpg_spec(
 
 		//-------- PLOT WINDOW --------
 		xmin = - 0.5*freq_incr;	xmax = xmin + ((double)NFFT2 - 0.5) * freq_incr;
-		ymin = 82.0;			ymax = 88.0;		// dB unit
+		// ymin = 0.0;			ymax = 3.0;		// Linear
+		ymin = -15.0;			ymax = 5.0;		// dB unit
 		peakVal = -1.0e6;		// Reset Peak Value
 		for(index=0; index<NFFT2; index++){
-			plot_y[index] = 10.0* log10(xspec_ptr[st_index* NFFT2 + index]);	// autocorr. in dB
+			plot_y[index] = 10.0* log10(xspec_ptr[st_index* NFFT2 + index]) - 90.0;	// autocorr. in dB
+			// plot_y[index] = xspec_ptr[st_index* NFFT2 + index] * 1.0e-9;
 		}
 		//-------- Peak Search
 		for(index=0.1*NFFT2; index<0.9*NFFT2; index++){

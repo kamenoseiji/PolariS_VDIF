@@ -283,17 +283,16 @@ int	segment_offset(
 	int					*offset_ptr)
 {
 	int			seg_index;		// Index for segments
-	long long	seg_offset;		// Offset to the segment head
-	long long	SampleLenInPart;	// Number of samples per IF per part
+	long long	SegLenByte;		// Length of a segment in Bytes
 
 	//-------- First Half
+	SegLenByte = param_ptr->segLen* param_ptr->qbit* param_ptr->num_st / 8;		// Segment Length in Byte
 	for(seg_index = 0; seg_index < NsegPart; seg_index ++){
-		SampleLenInPart = (long long)param_ptr->fsample/PARTNUM;
-		seg_offset = (long long)seg_index* (SampleLenInPart - (long long)param_ptr->segLen);
-		seg_offset /= (long long)(NsegPart - 1);
-		offset_ptr[seg_index] 			= (int)seg_offset;
-		// offset_ptr[seg_index] 			= (int)(seg_offset/2)* 2;
-		offset_ptr[seg_index + NsegPart]= offset_ptr[seg_index] + SampleLenInPart;
+
+		offset_ptr[seg_index]  = (int)(((long long)seg_index* (HALFBUF - SegLenByte))/ ((long long)NsegPart - 1));
+		offset_ptr[seg_index]  -= (offset_ptr[seg_index] % 4);		// 4-byte alignment
+
+		offset_ptr[seg_index + NsegPart]= offset_ptr[seg_index] + HALFBUF;
 	}
 
 /*

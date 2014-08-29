@@ -62,9 +62,9 @@ main(
 	param_ptr->num_st    = num_st;		// Number of streams
 	param_ptr->num_ch    = num_ch;		// Number of spectral channels
 	param_ptr->fsample   = pow2round(2* bandWidth)* 1000000;	// Sampling freq.
-	param_ptr->segNum    = pow2round((unsigned int)(2* param_ptr->fsample / param_ptr->segLen));// Number of segments in 1 sec
-	printf("PARAM SET SEGNUM = %d \n", param_ptr->segNum);
-	printf("PARAM SET FSAMPLE = %d \n", param_ptr->fsample);
+	param_ptr->segNum    = pow2round((unsigned int)(param_ptr->fsample / param_ptr->num_ch));// Number of segments in 1 sec
+	printf("%d Segments per sec\n", param_ptr->segNum);
+	printf("%d Segments per part\n", NsegPart);
 //------------------------------------------ Start shm_alloc()
 	if( fork() == 0){
 		pid = getpid(); sprintf(cmd[0], "shm_alloc");
