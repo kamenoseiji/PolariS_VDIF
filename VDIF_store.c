@@ -85,7 +85,9 @@ main(
 
 		if( param_ptr->part_index != prev_part){
 			// printf("Part%d : frame ID = %08d \n", param_ptr->part_index, frameID);
-			sops.sem_num = (ushort)1; sops.sem_op = (short)1; sops.sem_flg = (short)0;
+			sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)1; sops.sem_flg = (short)0;
+			semop(param_ptr->sem_data_id, &sops, 1);
+			sops.sem_num = (ushort)SEM_VDIF_POWER; sops.sem_op = (short)1; sops.sem_flg = (short)0;
 			semop(param_ptr->sem_data_id, &sops, 1);
 			prev_part = param_ptr->part_index;
 		}

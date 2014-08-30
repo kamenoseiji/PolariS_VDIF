@@ -3,12 +3,10 @@
 //	Author : Seiji Kameno
 //	Created: 2013/12/23
 //
-#include "shm_k5data.inc"
-// #include "k5dict.inc"
+#include "shm_VDIF.inc"
 #include <stdlib.h>
 #include <cpgplot.h>
 #include <math.h>
-#define timeNum 128
 
 main(
 	int		argc,			// Number of Arguments
@@ -19,8 +17,8 @@ main(
 	struct	sembuf		sops;			// Semaphore for data area
 	int		IFindex;
 	int		index;
-	float	bitPower[Nif][timeNum];		// Power Monitor Data
-	float	tempPower[timeNum];			// Buffer
+	float	bitPower[MAX_NIF][POWER_TIME_NUM];	// Power Monitor Data
+	float	tempPower[POWER_TIME_NUM];			// Buffer
 	char	pg_text[256];				// Text to plot
 	char	xlabel[64];					// X-axis label
 //------------------------------------------ Access to the SHARED MEMORY
@@ -30,9 +28,9 @@ main(
         sizeof(struct SHM_PARAM),		// SIZE OF SHM
         &shrd_param_id,					// SHM ID
         &param_ptr) != -1){				// Pointer to the SHM
-		printf("Succeeded to access the shared parameter [%d]!\n",  param_ptr->shrd_param_id);
+		printf("PowerView: Succeeded to access the shared parameter [%d]!\n",  param_ptr->shrd_param_id);
 	}
-	memset(bitPower, 0, Nif* timeNum* sizeof(float));
+	memset(bitPower, 0, param_ptr->num_st* POWER_TIME_NUM* sizeof(float));
 //------------------------------------------ K5 Header and Data
 	setvbuf(stdout, (char *)NULL, _IONBF, 0);	// Disable stdout cache
 	cpgbeg(1, argv[1], 1, 1);
@@ -47,10 +45,10 @@ main(
 		semop( param_ptr->sem_data_id, &sops, 1);
 
 		//-------- Plot Power Monitor
-		for(IFindex=0; IFindex<Nif; IFindex++){
-			memcpy(tempPower, bitPower[IFindex], timeNum*sizeof(float));
+		for(IFindex=0; IFindex<param_ptr->num_st; IFindex++){
+			memcpy(tempPower, bitPower[IFindex], POWER_TIME_NUM*sizeof(float));
 			bitPower[IFindex][0] = 10.0* log10(param_ptr->power[IFindex]);
-			memcpy(&bitPower[IFindex][1], tempPower, (timeNum-1)*sizeof(float));
+			memcpy(&bitPower[IFindex][1], tempPower, (POWER_TIME_NUM-1)*sizeof(float));
 		}
 		cpg_power(param_ptr, bitPower);
 	}

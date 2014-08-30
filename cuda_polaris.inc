@@ -159,12 +159,12 @@ __global__ void segform_2st_2bit(
 	float   *segdata,					// Output Segment Data
 	int		length)						// Length to copy
 {
-	int	half_length;
-	unsigned char bitmask = 0x03;		// 2-bit mask
+	int	oct_length = length/8;
+	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
-	float	weight[] = {-3.0, 1.0, -1.0, 3.0};
+	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
-	if( (ix >= 0) && (ix < length/8) ){
+	if( (ix >= 0) && (ix < oct_length) ){
 /*
 		segdata[         8* ix    ] = weight[(vdifdata_in[4*ix   ] >> 6) & bitmask];	// Stream 0
 		segdata[         8* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];	// Stream 0
@@ -208,12 +208,12 @@ __global__ void segform_4st_2bit(
 	float   *segdata,					// Output Segment Data
 	int		length)						// Length to copy
 {
-	int	half_length;
-	unsigned char bitmask = 0x03;		// 2-bit mask
+	int	quad_length = length/4;
+	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
 	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
-	if( (ix >= 0) && (ix < length/4) ){
+	if( (ix >= 0) && (ix < quad_length) ){
 		segdata[            4* ix    ] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
 		segdata[            4* ix + 1] = (float)(((vdifdata_in[4*ix   ] >> 5) & 0x01) | ((vdifdata_in[4*ix   ] >> 3) & 0x02) ) - bias ;
 		segdata[            4* ix + 2] = (float)(((vdifdata_in[4*ix   ] >> 3) & 0x01) | ((vdifdata_in[4*ix   ] >> 1) & 0x02) ) - bias ;
@@ -255,11 +255,12 @@ __global__ void segform_8st_2bit(
 	float   *segdata,					// Output Segment Data
 	int		length)						// Length to copy
 {
-	unsigned char bitmask = 0x03;		// 2-bit mask
+	int	half_length = length/2;
+	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
-	float	weight[] = {-3.0, 1.0, -1.0, 3.0};
+	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
-	if( (ix >= 0) && (ix < length/2) ){
+	if( (ix >= 0) && (ix < half_length) ){
 		segdata[            2* ix    ] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
 		segdata[            2* ix + 1] = (float)(((vdifdata_in[4*ix   ] >> 5) & 0x01) | ((vdifdata_in[4*ix   ] >> 3) & 0x02) ) - bias ;
 		segdata[   length + 2* ix    ] = (float)(((vdifdata_in[4*ix   ] >> 3) & 0x01) | ((vdifdata_in[4*ix   ] >> 1) & 0x02) ) - bias ;
@@ -304,9 +305,9 @@ __global__ void segform_16st_2bit(
 	float   *segdata,					// Output Segment Data
 	int		length)						// Length to copy
 {
-	unsigned char bitmask = 0x03;		// 2-bit mask
+	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
-	float	weight[] = {-3.0, 1.0, -1.0, 3.0};
+	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
 	if( (ix >= 0) && (ix < length) ){
 		segdata[             ix] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;

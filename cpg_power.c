@@ -2,10 +2,9 @@
 //
 // Author : Seiji Kameno
 // Created: 2013/12/23
-#include "shm_k5data.inc"
+#include "shm_VDIF.inc"
 #include <cpgplot.h>
 #include <math.h>
-#define	timeNum		128
 #define	MAX(a, b)	((a) > (b)?(a):(b))
 #define	MIN(a, b)	((a) < (b)?(a):(b))
 
@@ -21,30 +20,30 @@ int	cpg_power(
 	int		nxwin, nywin;			// Number of Panels in X and Y
 	int		nx_index, ny_index;		// Index for Panels
 	int		oldestIndex;
-	float	plotX[timeNum], plotY[timeNum];
+	float	plotX[POWER_TIME_NUM], plotY[POWER_TIME_NUM];
 	float	xwin_incr,	ywin_incr;	// Position Increment of Panels
 	float	x_text, y_text;			// Text Drawing Position
 	char	text[256];				// Text to Write
 
 	cpgsch(0.5);
-	for(timeIndex=0; timeIndex<timeNum; timeIndex++){
-		plotX[timeIndex] = (float)(-timeIndex);
+	for(timeIndex=0; timeIndex<POWER_TIME_NUM; timeIndex++){
+		plotX[timeIndex] = (float)(-timeIndex) / PARTNUM;
 	};
 	nxwin   = (int)sqrt((double)param_ptr->num_st);
 	nywin   = (param_ptr->num_st + nxwin - 1)/nxwin;
 	xwin_incr = 0.9 / (float)nxwin;
 	ywin_incr = 0.9 / (float)nywin;
 
-	oldestIndex = MIN(timeNum-1, param_ptr->current_rec);
+	oldestIndex = MIN(POWER_TIME_NUM-1, param_ptr->current_rec);
 	for(st_index=0; st_index<param_ptr->num_st; st_index++){
 
 		nx_index	= st_index % nxwin;
 		ny_index	= st_index / nxwin;
 
-		memcpy(plotY, &bitPower[st_index* timeNum], timeNum* sizeof(float));
+		memcpy(plotY, &bitPower[st_index* POWER_TIME_NUM], POWER_TIME_NUM* sizeof(float));
 
 		/*-------- PLOT WINDOW --------*/
-		xmin = plotX[oldestIndex];	xmax = plotX[0];
+		xmin = plotX[oldestIndex];	xmax = plotX[0] + 0.01;
 		ymin = 30.0;	ymax = -30.0;
 		for(index=0; index<oldestIndex; index++){
 			ymin = MIN(ymin, plotY[index]);
@@ -59,7 +58,7 @@ int	cpg_power(
 		cpgsci(2);	cpgrect(xmin, xmax, ymin, ymax);
 		cpgsci(0);	cpgbox("G", 0.0, 0, "G", 10.0, 0);
 		cpgsci(1);	cpgbox(	"BCNTS", 0.0, 0, "BCNTS", 10.0, 10);
-		cpgsci(4);	cpgpt( timeNum, plotX, plotY, 16);
+		cpgsci(4);	cpgpt( POWER_TIME_NUM, plotX, plotY, 16);
 
 		//-------- IF number
 		x_text = xmin*0.2 + xmax*0.8; y_text = ymin*0.1 + ymax*0.9;

@@ -46,6 +46,7 @@ union VDIF32byte{
 #define	SEGDATA_SIZE	MAX_NIF* param_ptr->segLen* param_ptr->segNum* sizeof(float)
 #define	XSPEC_SIZE		MAX_NIF* MAX_NIF* param_ptr->num_ch* sizeof(float)
 #define	MAX_FILE_REC	3600		// Maximum number of records in output file
+#define	POWER_TIME_NUM	1024		// Maximum number of points to plot total power
 
 //-------- Shared Parameter
 struct	SHM_PARAM{
@@ -116,14 +117,8 @@ struct	SHM_PARAM{
 #define	ABSFIN		0x80000000	// 1000 0000 0000 0000 0000 0000 0000 0000
 
 //-------- Semaphore Map
-#define	SEM_VDIF_PART_0	0			// A/D for IF0, first half of every sec. 
-#define	SEM_VDIF_PART_1	1			// A/D for IF1, first half of every sec. 
-#define	SEM_VDIF_PART_2	2			// A/D for IF2, first half of every sec. 
-#define	SEM_VDIF_PART_3	3			// A/D for IF3, first half of every sec. 
-#define	SEM_VDIF_PART_4	4			// A/D for IF0, last half of every sec. 
-#define	SEM_VDIF_PART_5	5			// A/D for IF1, last half of every sec. 
-#define	SEM_VDIF_PART_6	6			// A/D for IF2, last half of every sec. 
-#define	SEM_VDIF_PART_7	7			// A/D for IF3, last half of every sec. 
+#define	SEM_VDIF_PART	0			// A/D for IF0, first half of every sec. 
+#define	SEM_VDIF_POWER 	1			// A/D for IF1, first half of every sec. 
 #define	SEM_SEG_F		8			// S-part bit->weight for first half
 #define	SEM_SEG_L		9			// S-part bit->weight for first half
 #define	SEM_FX			10			// FFT and Cross Corr. for every sec.
@@ -133,7 +128,7 @@ struct	SHM_PARAM{
 #define SHM_PARM	"/usr/local/custom/bin/shm_param"
 #define SHM_ALLOC	"/usr/local/custom/bin/shm_alloc"
 #define VDIF_STORE	"/usr/local/custom/bin/VDIF_store"
-#define SHM_SEGDATA	"/usr/local/custom/bin/shm_segdata"
+#define BITDIST		"/usr/local/custom/bin/bitDist"
 #define CUDA_FFT	"/usr/local/custom/bin/cuda_fft_xspec"
 #define SPEC_VIEW	"/usr/local/custom/bin/shm_spec_view"
 #define POWER_VIEW	"/usr/local/custom/bin/shm_power_view"

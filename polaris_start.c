@@ -85,7 +85,6 @@ main(
 //------------------------------------------ Start Spectrum Viewer
 	if( param_ptr->validity & PGPLOT ){
 		strcpy(cmd[1], pgdev);
-/*
 		if( fork() == 0){
 			pid = getpid(); sprintf(cmd[0], "shm_power_view");
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
@@ -93,7 +92,6 @@ main(
 				perror("Can't Create Chiled Proces!!\n"); return(-1);
 			}
 		}
-*/
 		if( fork() == 0){
 			pid = getpid(); sprintf(cmd[0], "shm_spec_view");
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
@@ -108,6 +106,13 @@ main(
 		pid = getpid(); sprintf(cmd[0], "cuda_fft_xspec");
 		printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
 		if( execl( CUDA_FFT, cmd[0], (char *)NULL ) == -1){
+			perror("Can't Create Chiled Proces!!\n"); return(-1);
+		}
+	}
+	if( fork() == 0){
+		pid = getpid(); sprintf(cmd[0], "bitDist");
+		printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
+		if( execl( BITDIST, cmd[0], (char *)NULL ) == -1){
 			perror("Can't Create Chiled Proces!!\n"); return(-1);
 		}
 	}

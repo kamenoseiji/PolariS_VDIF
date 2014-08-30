@@ -10,7 +10,7 @@ CCOMPL=gcc $(CFLAGS)
 NVCC=nvcc -I/usr/local/cuda/include -I/usr/local/cuda/common/inc
 FCOMPL=gfortran 
 #------- Followings are PASS or DIRECTORY -------
-PROGS=	polaris_start shm_param shm_alloc shm_init shm_param_view VDIF_store cuda_fft_xspec shm_spec_view
+PROGS=	polaris_start shm_param shm_alloc shm_init shm_param_view VDIF_store cuda_fft_xspec shm_spec_view shm_power_view bitDist
 #PROGS=	polaris_start shm_param shm_alloc shm_init shm_param_view cuda_fft_xspec shm_segdata shm_spec_view shm_power_view k5sample_store k5sim PolariSplit PolariBunch
 GRLIBS= -L/usr/include/X11 -lX11
 MATH=	-lm
@@ -23,8 +23,10 @@ OBJ_shm_alloc= shm_alloc.o shm_init_create.o shm_access.o
 OBJ_shm_init = shm_init.o shm_access.o
 OBJ_shm_view = shm_param_view.o shm_access.o timesystem.o vdif_head_extract.o
 OBJ_spec_view = shm_spec_view.o shm_access.o cpg_setup.o cpg_spec.o
+OBJ_power_view = shm_power_view.o shm_access.o cpg_setup.o cpg_power.o
 OBJ_VDIF_store = VDIF_store.o shm_access.o
-OBJ_cuda_fft = cuda_fft_xspec.o bitPower.o
+OBJ_cuda_fft = cuda_fft_xspec.o
+OBJ_bitDist = bitDist.o
 OBJ_PolariSplit = PolariSplit.o
 OBJ_PolariBunch = PolariBunch.o
 #----------------- Compile and link ------------------------
@@ -45,6 +47,9 @@ shm_init : $(OBJ_shm_init)
 
 shm_param_view : $(OBJ_shm_view)
 	$(CCOMPL) -o $@ $(OBJ_shm_view)
+
+bitDist : $(OBJ_bitDist)
+	$(CCOMPL) -o $@ $(OBJ_bitDist) $(MATH)
 
 shm_spec_view : $(OBJ_spec_view)
 	$(FCOMPL) -o $@ $(OBJ_spec_view) $(CPGPLOT) $(PGPLOT) $(GRLIBS)
@@ -68,13 +73,14 @@ install:
 #	$(NVCC) -c $*.cu
 cuda_fft_xspec.o:	cuda_fft_xspec.cu	shm_VDIF.inc cuda_polaris.inc
 	$(NVCC) -c cuda_fft_xspec.cu
-bitPower.o:			bitPower.cu
-	$(NVCC) -c bitPower.cu
+#bitPower.o:			bitPower.cu
+#	$(NVCC) -c bitPower.cu
 
 .c.o:
 	$(CCOMPL) -c $*.c
 
-VDIF_store.o:		VDIF_store.c	shm_VDIF.inc
+bitDist.o:			bitDist.c			shm_VDIF.inc
+VDIF_store.o:		VDIF_store.c		shm_VDIF.inc
 polaris_start.o:	polaris_start.c		shm_VDIF.inc
 pow2round.o:		pow2round.c
 PolariSplit.o:		PolariSplit.c		shm_VDIF.inc

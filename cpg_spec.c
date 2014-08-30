@@ -26,7 +26,7 @@ int	cpg_spec(
 	float	peakVal;				// Line peak value to display [dB]
 	char	text[256];				// Text to Write
 
-	printf("NUMIF=%d %e %e %e %e\n", param_ptr->num_st, xspec_ptr[32768], xspec_ptr[32769], xspec_ptr[32770], xspec_ptr[32771]);
+	// printf("NUMIF=%d %e %e %e %e\n", param_ptr->num_st, xspec_ptr[32768], xspec_ptr[32769], xspec_ptr[32770], xspec_ptr[32771]);
 
 	cpgsch(0.5);
 	freq_incr = (double)(param_ptr->fsample) / 2.0e6 / NFFT2;
