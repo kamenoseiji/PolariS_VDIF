@@ -1,0 +1,37 @@
+spawn telnet 192.168.5.166 5653
+Trying 192.168.5.166...
+Connected to 192.168.5.166.
+Escape character is '^]'.
+sel_bs=1;
+!sel_bs=0;
+spawn telnet 192.168.5.163 5653
+Trying 192.168.5.163...
+Connected to 192.168.5.163.
+Escape character is '^]'.
+
+_____OCTAVIA-BE CONTROL_____
+set_default;
+!set_default=0;
+OK
+sel_vrtpmode=1;
+!sel_vrtpmode=0;
+sel_vrtptxfrm1=mix:1;
+!sel_vrtptxfrm1=0;
+set_vrtprate1=128:128;
+!set_vrtprate1=0;
+sel_pvalidact1=high;
+!sel_pvalidact1=0;
+set_1ppscycle1=4;
+!set_1ppscycle1=0;
+set_enbit1=0xffffffff;
+!set_enbit1=0;
+set_vrtpaux1=DFU;
+!set_vrtpaux1=0;
+set_vrtpdes1=192.168.10.231:192.168.10.231:10;
+sel_bstvr1=vsitvg;
+!set_vrtpdes1=0;
+!sel_bstvr1=0;
+sel_bs1=dport:dport:dport:timein:32;
+!sel_bs1=0;
+ctl_vrtptx1=start;
+!ctl_vrtptx1=0;

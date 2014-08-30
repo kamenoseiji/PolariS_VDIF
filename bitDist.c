@@ -71,10 +71,11 @@ main(
 
 		cycle_index = param_ptr->part_index / 2;	// 4 cycles per 1 sec
 		page_index  = param_ptr->part_index % 2;	// 2 pages per cycle
+		VDIFutc( vdifhead_ptr, param_ptr);
 		// printf("Ready to process Part=%d Cycle=%d Page=%d\n", param_ptr->part_index, cycle_index, page_index);
 
 		//-------- BitDist
-		(*bitCount[modeSW])(HALFBUF/8, &vdifdata_ptr[HALFBUF* page_index], bitDist); 
+		(*bitCount[modeSW])(HALFBUF/4, &vdifdata_ptr[HALFBUF* page_index], bitDist); 
 		printf("Power [dB] = ");
 		for(IF_index=0; IF_index<param_ptr->num_st; IF_index ++){
 		 	gaussBit(4, &bitDist[4* IF_index], param, param_err );
@@ -233,18 +234,21 @@ int sod2hms(
 
 //-------- UTC in the VDIF header
 int	VDIFutc(
-	unsigned char		*k5head_ptr,	// IN: K5 header from K5/VSSP32
+	unsigned char		*vdifhead_ptr,	// IN: VDIF header (32 bytes)
 	struct SHM_PARAM	*param_ptr)		// OUT: UTC will be set in param_ptr
 {
-	int	sod = 0;		// Second of Day
+	int	ref_sec = 0;	// Seconds from reference date
+	int	ref_epoch = 0;	// Half-year periods from Y2000
 
-	memcpy(&sod, &k5head_ptr[4], 2);
-	if( (sod |= ((k5head_ptr[6] & 0x01) << 16)) == 0){	return(0);}
+	ref_sec    = ((vdifhead_ptr[0] & 0x3f) << 24) + (vdifhead_ptr[1] << 16) + (vdifhead_ptr[2] << 8) + vdifhead_ptr[3];
+	ref_epoch  = (vdifhead_ptr[4]      ) & 0x3f;
 
-	sod2hms(sod, &(param_ptr->hour), &(param_ptr->min), &(param_ptr->sec));
-	param_ptr->doy  =  k5head_ptr[8] | ((k5head_ptr[9] & 0x01) << 8);
-	param_ptr->year = 2000 + ((k5head_ptr[9] >> 1) & 0x3f);
-	return(sod);
+	param_ptr->year = 2000 + ref_epoch/2;
+	param_ptr->doy  =  ref_sec / 86400 + (ref_epoch%2)* 182;
+	if(param_ptr->year % 4 == 0){	param_ptr->doy++;}
+	sod2hms( ref_sec%86400, &(param_ptr->hour), &(param_ptr->min), &(param_ptr->sec) );
+
+	return(ref_sec);
 }
 
 //-------- Open Files to Record Data

@@ -27,8 +27,8 @@ main(
 	struct	sembuf		sops;			// Semaphore for data access
 	unsigned char	*vdifdata_ptr;		// Pointer to shared VDIF data
 	float	*xspec_ptr;					// Pointer to 1-sec-integrated Power Spectrum
-	// FILE	*file_ptr[6];				// File Pointer to write
-	// char	fname_pre[16];
+	//FILE	*file_ptr[16];				// File Pointer to write
+	//char	fname_pre[16];
 
 	dim3			Dg, Db(512,1, 1);	// Grid and Block size
 	unsigned char	*cuvdifdata_ptr;	// Pointer to VDIF data in GPU
@@ -85,6 +85,16 @@ main(
 			cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
 		}
 
+#ifdef SAVE
+		//-------- Open output files
+		if(param_ptr->current_rec == 0){
+			sprintf(fname_pre, "%04d%03d%02d%02d%02d", param_ptr->year, param_ptr->doy, param_ptr->hour, param_ptr->min, param_ptr->sec );
+			for(index=0; index<param_ptr->num_st; index++){
+				fileRecOpen(param_ptr, index, (A00_REC << index), fname_pre, "A", file_ptr);
+			}
+		}
+#endif
+
 		//-------- Wait for the first half in the S-part
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
@@ -121,15 +131,27 @@ main(
 		if( part_index == PARTNUM - 1){
 			cudaMemcpy(xspec_ptr, cuPowerSpec, NST* NFFT2* sizeof(float), cudaMemcpyDeviceToHost);
 			sops.sem_num = (ushort)SEM_FX; sops.sem_op = (short)1; sops.sem_flg = (short)0; semop( param_ptr->sem_data_id, &sops, 1);
+#ifdef SAVE
+			for(index=0; index<param_ptr->num_st; index++){
+				if(file_ptr[index] != NULL){fwrite(&xspec_ptr[index* NFFT2], sizeof(float), NFFT2, file_ptr[index]);}   // Save Pspec
+			}
+
+			//-------- Refresh output data file
+			if(param_ptr->current_rec == MAX_FILE_REC - 1){
+				for(index=0; index<param_ptr->num_st; index++){ if( file_ptr[index] != NULL){   fclose(file_ptr[index]);} }
+				param_ptr->current_rec = 0;
+			} else { param_ptr->current_rec ++;}
+#endif
 		}
 		// printf("%lf [msec]\n", GetTimer());
-		param_ptr->current_rec ++;
 
 	}	// End of part loop
 /*
 -------------------------------------------- RELEASE the SHM
 */
-	// for(index=0; index<Nif+2; index++){ if( file_ptr[index] != NULL){	fclose(file_ptr[index]);} }
+#ifdef SAVE
+	for(index=0; index<param_ptr->num_st; index++){ if( file_ptr[index] != NULL){	fclose(file_ptr[index]);} }
+#endif
 	cufftDestroy(cufft_plan);
 	cudaFree(cuvdifdata_ptr); cudaFree(cuRealData); cudaFree(cuSpecData); cudaFree(cuPowerSpec); // cudaFree(cuXSpec);
 
