@@ -72,7 +72,6 @@ main(
  	if(cufftPlan1d(&cufft_plan, NFFT, CUFFT_R2C, NST* NsegPart ) != CUFFT_SUCCESS){
  		fprintf(stderr, "Cuda Error : Failed to create plan.\n"); return(-1); }
 //------------------------------------------ Parameters for S-part format
-	// printf("NsegPart = %d\n", NsegPart);
  	segment_offset(param_ptr, offset);
 	// for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
 //------------------------------------------ K5 Header and Data
@@ -96,7 +95,7 @@ main(
 		//-------- Wait for the first half in the S-part
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
-		usleep(1000);	// Wait 1 msec
+		usleep(100);	// Wait 0.1 msec
 		part_index  = param_ptr->part_index;
 		page_index  = part_index % 2;	// 2 pages per cycle
 		// StartTimer();
@@ -106,6 +105,7 @@ main(
 		cudaMemcpy( &cuvdifdata_ptr[HALFBUF* page_index], &vdifdata_ptr[HALFBUF* page_index], HALFBUF, cudaMemcpyHostToDevice);
 
 		//-------- Segment Format
+
 		Dg.x=NFFT/512; Dg.y=1; Dg.z=1;
 		for(index=0; index < NsegPart; index ++){
 			seg_index = page_index* NsegPart + index;

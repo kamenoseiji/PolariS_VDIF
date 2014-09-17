@@ -347,4 +347,3 @@ __global__ void segform_16st_2bit(
 */
 	}
 }
-	

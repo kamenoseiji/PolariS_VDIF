@@ -70,6 +70,7 @@ main(
 //------------------------------------------ Open Socket to OCTAVIA
 	setvbuf(stdout, (char *)NULL, _IONBF, 0); 	// Disable stdout cache
 	param_ptr->validity |= ACTIVE;		// Set Sampling Activity Bit to 1
+	param_ptr->validity &= (~ENABLE);	// Wait until first second 
 
  	while( param_ptr->validity & ACTIVE ){
 		if( param_ptr->validity & (FINISH + ABSFIN) ){	break; }
@@ -80,11 +81,12 @@ main(
 		frameID    = (buf[5] << 16) + (buf[6] << 8) + buf[7];
 		param_ptr->part_index = frameID / FramePerPart;				// Part Number (0 - 7)
 		frame_addr = VDIFDATA_SIZE* (frameID % FramePerPage);		// Write Address in Page
+		if( param_ptr->part_index == 0){param_ptr->validity |= ENABLE;}
 
 		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
 		memcpy( &vdifdata_ptr[frame_addr], &buf[VDIFHEAD_SIZE], VDIFDATA_SIZE);
 
-		if( param_ptr->part_index != prev_part){
+		if( (param_ptr->part_index != prev_part) && (param_ptr->validity & ENABLE)){
 			// printf("Part%d : frame ID = %08d \n", param_ptr->part_index, frameID);
 			sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)1; sops.sem_flg = (short)0;
 			semop(param_ptr->sem_data_id, &sops, 1);
