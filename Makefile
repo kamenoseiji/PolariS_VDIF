@@ -10,7 +10,7 @@ CCOMPL=gcc $(CFLAGS)
 NVCC=nvcc -I/usr/local/cuda/include -I/usr/local/cuda/common/inc
 FCOMPL=gfortran 
 #------- Followings are PASS or DIRECTORY -------
-PROGS=	polaris_start shm_param shm_alloc shm_init shm_param_view VDIF_store cuda_fft_xspec shm_spec_view shm_power_view bitDist
+PROGS=	polaris_start shm_param shm_alloc shm_init shm_param_view VDIF_store cuda_fft_xspec shm_spec_view shm_power_view bitDist VDIF_sim
 #PROGS=	polaris_start shm_param shm_alloc shm_init shm_param_view cuda_fft_xspec shm_segdata shm_spec_view shm_power_view k5sample_store k5sim PolariSplit PolariBunch
 GRLIBS= -L/usr/include/X11 -lX11
 MATH=	-lm
@@ -25,6 +25,7 @@ OBJ_shm_view = shm_param_view.o shm_access.o timesystem.o vdif_head_extract.o
 OBJ_spec_view = shm_spec_view.o shm_access.o cpg_setup.o cpg_spec.o
 OBJ_power_view = shm_power_view.o shm_access.o cpg_setup.o cpg_power.o
 OBJ_VDIF_store = VDIF_store.o shm_access.o
+OBJ_VDIF_sim = VDIF_sim.o shm_access.o
 OBJ_cuda_fft = cuda_fft_xspec.o
 OBJ_bitDist = bitDist.o
 OBJ_PolariSplit = PolariSplit.o
@@ -35,6 +36,9 @@ polaris_start : $(OBJ_start)
 
 VDIF_store : $(OBJ_VDIF_store)
 	$(CCOMPL) -o $@ $(OBJ_VDIF_store)
+
+VDIF_sim : $(OBJ_VDIF_sim)
+	$(CCOMPL) -o $@ $(OBJ_VDIF_sim)
 
 shm_param : $(OBJ_shm_param)
 	$(CCOMPL) -o $@ $(OBJ_shm_param)
@@ -81,6 +85,7 @@ cuda_fft_xspec.o:	cuda_fft_xspec.cu	shm_VDIF.inc cuda_polaris.inc
 
 bitDist.o:			bitDist.c			shm_VDIF.inc
 VDIF_store.o:		VDIF_store.c		shm_VDIF.inc
+VDIF_sim.o:			VDIF_sim.c		shm_VDIF.inc
 polaris_start.o:	polaris_start.c		shm_VDIF.inc
 pow2round.o:		pow2round.c
 PolariSplit.o:		PolariSplit.c		shm_VDIF.inc

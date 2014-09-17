@@ -251,24 +251,6 @@ int	VDIFutc(
 	return(ref_sec);
 }
 
-//-------- Open Files to Record Data
-int	fileRecOpen(
-	struct SHM_PARAM	*param_ptr,		// IN: Shared Parameter
-	int					file_index,		// IN: File index number
-	int					file_flag,		// IN: File flag (A00_REC - C01_REC)
-	char				*fname_pre,		// IN: File name prefix
-	char				*fileType,		// IN: File type A/C/P
-	FILE				**file_ptr)		//OUT: file pointer
-{
-	char	fname[24];
-	if(param_ptr->validity & file_flag){
-		sprintf(fname, "%s.%s.%02d", fname_pre, fileType, file_index);
-		file_ptr[file_index] = fopen(fname, "w");
-		fwrite( param_ptr, sizeof(struct SHM_PARAM), 1, file_ptr[file_index]);
-	} else { file_ptr[file_index] = NULL;}
-	return(0);
-}
-
 //-------- 2-Bit 2-st Distribution Counter
 int bitDist2st2bit(
 	int				nbytes,		// Number of bytes to examine

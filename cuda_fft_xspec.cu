@@ -12,6 +12,7 @@
 #define SCALEFACT 1.0/(NFFT* NsegSec)
 
 int	segment_offset(struct SHM_PARAM	*, int *);
+int	fileRecOpen(struct SHM_PARAM	*, char *, FILE **, FILE **);
 
 main(
 	int		argc,			// Number of Arguments
@@ -27,8 +28,9 @@ main(
 	struct	sembuf		sops;			// Semaphore for data access
 	unsigned char	*vdifdata_ptr;		// Pointer to shared VDIF data
 	float	*xspec_ptr;					// Pointer to 1-sec-integrated Power Spectrum
-	//FILE	*file_ptr[16];				// File Pointer to write
-	//char	fname_pre[16];
+	FILE	*Pfile_ptr[16];				// File Pointer to write
+	FILE	*Afile_ptr[16];				// File Pointer to write
+	char	fname_pre[16];
 
 	dim3			Dg, Db(512,1, 1);	// Grid and Block size
 	unsigned char	*cuvdifdata_ptr;	// Pointer to VDIF data in GPU
@@ -85,15 +87,11 @@ main(
 			cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
 		}
 
-#ifdef SAVE
 		//-------- Open output files
 		if(param_ptr->current_rec == 0){
 			sprintf(fname_pre, "%04d%03d%02d%02d%02d", param_ptr->year, param_ptr->doy, param_ptr->hour, param_ptr->min, param_ptr->sec );
-			for(index=0; index<param_ptr->num_st; index++){
-				fileRecOpen(param_ptr, index, (A00_REC << index), fname_pre, "A", file_ptr);
-			}
+			fileRecOpen(param_ptr, fname_pre, Pfile_ptr, Afile_ptr);
 		}
-#endif
 
 		//-------- Wait for the first half in the S-part
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
@@ -131,27 +129,30 @@ main(
 		if( part_index == PARTNUM - 1){
 			cudaMemcpy(xspec_ptr, cuPowerSpec, NST* NFFT2* sizeof(float), cudaMemcpyDeviceToHost);
 			sops.sem_num = (ushort)SEM_FX; sops.sem_op = (short)1; sops.sem_flg = (short)0; semop( param_ptr->sem_data_id, &sops, 1);
-#ifdef SAVE
 			for(index=0; index<param_ptr->num_st; index++){
-				if(file_ptr[index] != NULL){fwrite(&xspec_ptr[index* NFFT2], sizeof(float), NFFT2, file_ptr[index]);}   // Save Pspec
+				if(Afile_ptr[index] != NULL){fwrite(&xspec_ptr[index* NFFT2], sizeof(float), NFFT2, Afile_ptr[index]);}   // Save Power Spectra
+				if(Pfile_ptr[index] != NULL){fwrite(&(param_ptr->power[index]), sizeof(float), 1, Pfile_ptr[index]);}   // Save Power
 			}
 
 			//-------- Refresh output data file
 			if(param_ptr->current_rec == MAX_FILE_REC - 1){
-				for(index=0; index<param_ptr->num_st; index++){ if( file_ptr[index] != NULL){   fclose(file_ptr[index]);} }
+				for(index=0; index<param_ptr->num_st; index++){
+					if( Afile_ptr[index] != NULL){   fclose(Afile_ptr[index]);}
+					if( Pfile_ptr[index] != NULL){   fclose(Pfile_ptr[index]);}
+				}
 				param_ptr->current_rec = 0;
 			} else { param_ptr->current_rec ++;}
-#endif
 		}
+		param_ptr->current_rec ++;
 		// printf("%lf [msec]\n", GetTimer());
-
 	}	// End of part loop
 /*
 -------------------------------------------- RELEASE the SHM
 */
-#ifdef SAVE
-	for(index=0; index<param_ptr->num_st; index++){ if( file_ptr[index] != NULL){	fclose(file_ptr[index]);} }
-#endif
+	for(index=0; index<param_ptr->num_st; index++){
+		if( Afile_ptr[index] != NULL){	fclose(Afile_ptr[index]);}
+		if( Pfile_ptr[index] != NULL){	fclose(Pfile_ptr[index]);}
+	}
 	cufftDestroy(cufft_plan);
 	cudaFree(cuvdifdata_ptr); cudaFree(cuRealData); cudaFree(cuSpecData); cudaFree(cuPowerSpec); // cudaFree(cuXSpec);
 
@@ -176,4 +177,30 @@ int	segment_offset(
 		offset_ptr[seg_index + NsegPart]= offset_ptr[seg_index] + HALFBUF;
 	}
 	return(NsegSec);
+}
+
+//-------- Open Files to Record Data
+int	fileRecOpen(
+	struct SHM_PARAM	*param_ptr,		// IN: Shared Parameter
+	char				*fname_pre,		// IN: File name prefix
+	FILE				**Pfile_ptr,		//OUT: file pointer
+	FILE				**Afile_ptr)		//OUT: file pointer
+{
+	char				fname[24];
+	int					file_index;		// IN: File index number
+
+	for(file_index=0; file_index < param_ptr->num_st; file_index++){
+		if( param_ptr->AC_REC & (P00_REC << file_index) ){		// P file
+			sprintf(fname, "%s.%c.%02d", fname_pre, 'P', file_index);
+			Pfile_ptr[file_index] = fopen(fname, "w");
+			fwrite( param_ptr, sizeof(struct SHM_PARAM), 1, Pfile_ptr[file_index]);
+		} else { Pfile_ptr[file_index] = NULL;}
+
+		if( param_ptr->AC_REC & (A00_REC << file_index) ){		// A file
+			sprintf(fname, "%s.%c.%02d", fname_pre, 'A', file_index);
+			Afile_ptr[file_index] = fopen(fname, "w");
+			fwrite( param_ptr, sizeof(struct SHM_PARAM), 1, Afile_ptr[file_index]);
+		} else { Afile_ptr[file_index] = NULL;}
+	}
+	return(0);
 }
