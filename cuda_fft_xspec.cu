@@ -42,11 +42,12 @@ main(
 	int				modeSW = 0;
 
 	//-------- Pointer to functions
- 	void	(*segform[4])( unsigned char *, float *, int);
- 	segform[0] = segform_2st_2bit;
- 	segform[1] = segform_4st_2bit;
- 	segform[2] = segform_8st_2bit;
- 	segform[3] = segform_16st_2bit;
+ 	void	(*segform[5])( unsigned char *, float *, int);
+ 	segform[0] = segform_1st_2bit;
+ 	segform[1] = segform_2st_2bit;
+ 	segform[2] = segform_4st_2bit;
+ 	segform[3] = segform_8st_2bit;
+ 	segform[4] = segform_16st_2bit;
 
 //------------------------------------------ Access to the SHARED MEMORY
 	shrd_param_id = shmget( SHM_PARAM_KEY, sizeof(struct SHM_PARAM), 0444);
@@ -54,10 +55,11 @@ main(
 	vdifdata_ptr = (unsigned char *)shmat(param_ptr->shrd_vdifdata_id, NULL, SHM_RDONLY);
 	xspec_ptr  = (float *)shmat(param_ptr->shrd_xspec_id, NULL, 0);
 	switch( param_ptr->num_st ){
- 		case  2 :	modeSW = 0; break;
- 		case  4 :	modeSW = 1; break;
- 		case  8 :	modeSW = 2; break;
- 		case 16 :	modeSW = 3; break;
+ 		case  1 :	modeSW = 0; break;
+ 		case  2 :	modeSW = 1; break;
+ 		case  4 :	modeSW = 2; break;
+ 		case  8 :	modeSW = 3; break;
+ 		case 16 :	modeSW = 4; break;
  	}
 //------------------------------------------ Prepare for CuFFT
 	cudaMalloc( (void **)&cuvdifdata_ptr, MAX_SAMPLE_BUF);

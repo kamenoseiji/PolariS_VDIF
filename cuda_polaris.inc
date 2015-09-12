@@ -152,7 +152,34 @@ __global__ void segform8bit(
 		segdata[3*length + ix] = ((float)k5data_in[4*ix+3]- bias)*scale;
 	}
 }
-
+//-------- Format segment data using 1-stream 2-bit (VLBI1)
+__global__ void segform_1st_2bit(
+	unsigned char   *vdifdata_in,		// Input VDIF Data, 1-byte packed (for 2 samples)
+	float   *segdata,					// Output Segment Data
+	int		length)						// Length to copy
+{
+	int	hex_length = length/16;
+	float	bias = 1.5;
+	int ix = blockIdx.x* blockDim.x + threadIdx.x;
+	if( (ix >= 0) && (ix < hex_length) ){
+		segdata[16* ix     ] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
+		segdata[16* ix +  1] = (float)(((vdifdata_in[4*ix   ] >> 5) & 0x01) | ((vdifdata_in[4*ix   ] >> 3) & 0x02) ) - bias ;
+		segdata[16* ix +  2] = (float)(((vdifdata_in[4*ix   ] >> 3) & 0x01) | ((vdifdata_in[4*ix   ] >> 1) & 0x02) ) - bias ;
+		segdata[16* ix +  3] = (float)(((vdifdata_in[4*ix   ] >> 1) & 0x01) | ((vdifdata_in[4*ix   ] << 1) & 0x02) ) - bias ;
+		segdata[16* ix +  4] = (float)(((vdifdata_in[4*ix +1] >> 7) & 0x01) | ((vdifdata_in[4*ix +1] >> 5) & 0x02) ) - bias ;
+		segdata[16* ix +  5] = (float)(((vdifdata_in[4*ix +1] >> 5) & 0x01) | ((vdifdata_in[4*ix +1] >> 3) & 0x02) ) - bias ;
+		segdata[16* ix +  6] = (float)(((vdifdata_in[4*ix +1] >> 3) & 0x01) | ((vdifdata_in[4*ix +1] >> 1) & 0x02) ) - bias ;
+		segdata[16* ix +  7] = (float)(((vdifdata_in[4*ix +1] >> 1) & 0x01) | ((vdifdata_in[4*ix +1] << 1) & 0x02) ) - bias ;
+		segdata[16* ix +  8] = (float)(((vdifdata_in[4*ix +2] >> 7) & 0x01) | ((vdifdata_in[4*ix +2] >> 5) & 0x02) ) - bias ;
+		segdata[16* ix +  9] = (float)(((vdifdata_in[4*ix +2] >> 5) & 0x01) | ((vdifdata_in[4*ix +2] >> 3) & 0x02) ) - bias ;
+		segdata[16* ix + 10] = (float)(((vdifdata_in[4*ix +2] >> 3) & 0x01) | ((vdifdata_in[4*ix +2] >> 1) & 0x02) ) - bias ;
+		segdata[16* ix + 11] = (float)(((vdifdata_in[4*ix +2] >> 1) & 0x01) | ((vdifdata_in[4*ix +2] << 1) & 0x02) ) - bias ;
+		segdata[16* ix + 12] = (float)(((vdifdata_in[4*ix +3] >> 7) & 0x01) | ((vdifdata_in[4*ix +3] >> 5) & 0x02) ) - bias ;
+		segdata[16* ix + 13] = (float)(((vdifdata_in[4*ix +3] >> 5) & 0x01) | ((vdifdata_in[4*ix +3] >> 3) & 0x02) ) - bias ;
+		segdata[16* ix + 14] = (float)(((vdifdata_in[4*ix +3] >> 3) & 0x01) | ((vdifdata_in[4*ix +3] >> 1) & 0x02) ) - bias ;
+		segdata[16* ix + 15] = (float)(((vdifdata_in[4*ix +3] >> 1) & 0x01) | ((vdifdata_in[4*ix +3] << 1) & 0x02) ) - bias ;
+	}
+}
 //-------- Format segment data using 2-stream 2-bit (VERA1)
 __global__ void segform_2st_2bit(
 	unsigned char   *vdifdata_in,		// Input VDIF Data, 1-byte packed (for 2 samples)
@@ -162,28 +189,8 @@ __global__ void segform_2st_2bit(
 	int	oct_length = length/8;
 	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
-	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
 	if( (ix >= 0) && (ix < oct_length) ){
-/*
-		segdata[         8* ix    ] = weight[(vdifdata_in[4*ix   ] >> 6) & bitmask];	// Stream 0
-		segdata[         8* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];	// Stream 0
-		segdata[         8* ix + 2] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];	// Stream 0
-		segdata[         8* ix + 3] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];	// Stream 0
-		segdata[         8* ix + 4] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];	// Stream 0
-		segdata[         8* ix + 5] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];	// Stream 0
-		segdata[         8* ix + 6] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];	// Stream 0
-		segdata[         8* ix + 7] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];	// Stream 0
-		segdata[length + 8* ix    ] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 1] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 2] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 3] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 4] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 5] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 6] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];	// Stream 1
-		segdata[length + 8* ix + 7] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];	// Stream 1
-*/
-
 		segdata[         8* ix    ] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
 		segdata[         8* ix + 1] = (float)(((vdifdata_in[4*ix   ] >> 5) & 0x01) | ((vdifdata_in[4*ix   ] >> 3) & 0x02) ) - bias ;
 		segdata[         8* ix + 2] = (float)(((vdifdata_in[4*ix   ] >> 3) & 0x01) | ((vdifdata_in[4*ix   ] >> 1) & 0x02) ) - bias ;
@@ -200,6 +207,22 @@ __global__ void segform_2st_2bit(
 		segdata[length + 8* ix + 5] = (float)(((vdifdata_in[4*ix +3] >> 5) & 0x01) | ((vdifdata_in[4*ix +3] >> 3) & 0x02) ) - bias ;
 		segdata[length + 8* ix + 6] = (float)(((vdifdata_in[4*ix +3] >> 3) & 0x01) | ((vdifdata_in[4*ix +3] >> 1) & 0x02) ) - bias ;
 		segdata[length + 8* ix + 7] = (float)(((vdifdata_in[4*ix +3] >> 1) & 0x01) | ((vdifdata_in[4*ix +3] << 1) & 0x02) ) - bias ;
+		// segdata[         8* ix    ] = weight[(vdifdata_in[4*ix   ] >> 6) & bitmask];	// Stream 0
+		// segdata[         8* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];	// Stream 0
+		// segdata[         8* ix + 2] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];	// Stream 0
+		// segdata[         8* ix + 3] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];	// Stream 0
+		// segdata[         8* ix + 4] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];	// Stream 0
+		// segdata[         8* ix + 5] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];	// Stream 0
+		// segdata[         8* ix + 6] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];	// Stream 0
+		// segdata[         8* ix + 7] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];	// Stream 0
+		// segdata[length + 8* ix    ] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 1] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 2] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 3] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 4] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 5] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 6] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];	// Stream 1
+		// segdata[length + 8* ix + 7] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];	// Stream 1
 	}
 }
 //-------- Format segment data using 4-stream 2-bit (VERA2)
@@ -234,18 +257,18 @@ __global__ void segform_4st_2bit(
 		// segdata[            4* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];	// Stream 0
 		// segdata[            4* ix + 2] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];	// Stream 0
 		// segdata[            4* ix + 3] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];	// Stream 0
-		// segdata[   length + 4* ix    ] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];	// Stream 0
-		// segdata[   length + 4* ix + 1] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];	// Stream 0
-		// segdata[   length + 4* ix + 2] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];	// Stream 0
-		// segdata[   length + 4* ix + 3] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];	// Stream 0
-		// segdata[2* length + 4* ix    ] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];	// Stream 1
-		// segdata[2* length + 4* ix + 1] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];	// Stream 1
-		// segdata[2* length + 4* ix + 2] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];	// Stream 1
-		// segdata[2* length + 4* ix + 3] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];	// Stream 1
-		// segdata[3* length + 4* ix    ] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];	// Stream 1
-		// segdata[3* length + 4* ix + 1] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];	// Stream 1
-		// segdata[3* length + 4* ix + 2] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];	// Stream 1
-		// segdata[3* length + 4* ix + 3] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];	// Stream 1
+		// segdata[   length + 4* ix    ] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];	// Stream 1
+		// segdata[   length + 4* ix + 1] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];	// Stream 1
+		// segdata[   length + 4* ix + 2] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];	// Stream 1
+		// segdata[   length + 4* ix + 3] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];	// Stream 1
+		// segdata[2* length + 4* ix    ] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];	// Stream 2
+		// segdata[2* length + 4* ix + 1] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];	// Stream 2
+		// segdata[2* length + 4* ix + 2] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];	// Stream 2
+		// segdata[2* length + 4* ix + 3] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];	// Stream 2
+		// segdata[3* length + 4* ix    ] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];	// Stream 3
+		// segdata[3* length + 4* ix + 1] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];	// Stream 3
+		// segdata[3* length + 4* ix + 2] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];	// Stream 3
+		// segdata[3* length + 4* ix + 3] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];	// Stream 3
 	}
 }
 
@@ -258,7 +281,6 @@ __global__ void segform_8st_2bit(
 	int	half_length = length/2;
 	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
-	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
 	if( (ix >= 0) && (ix < half_length) ){
 		segdata[            2* ix    ] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
@@ -277,25 +299,22 @@ __global__ void segform_8st_2bit(
 		segdata[6* length + 2* ix + 1] = (float)(((vdifdata_in[4*ix +3] >> 5) & 0x01) | ((vdifdata_in[4*ix +3] >> 3) & 0x02) ) - bias ;
 		segdata[7* length + 2* ix    ] = (float)(((vdifdata_in[4*ix +3] >> 3) & 0x01) | ((vdifdata_in[4*ix +3] >> 1) & 0x02) ) - bias ;
 		segdata[7* length + 2* ix + 1] = (float)(((vdifdata_in[4*ix +3] >> 1) & 0x01) | ((vdifdata_in[4*ix +3] << 1) & 0x02) ) - bias ;
-
-/*
-		segdata[             2* ix    ] = weight[(vdifdata_in[4*ix   ] >> 6) & bitmask];		// Stream 0
-		segdata[             2* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];		// Stream 0
-		segdata[    length + 2* ix    ] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];		// Stream 1
-		segdata[    length + 2* ix + 1] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];		// Stream 1
-		segdata[ 2* length + 2* ix    ] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];		// Stream 2
-		segdata[ 2* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];		// Stream 2
-		segdata[ 3* length + 2* ix    ] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];		// Stream 3
-		segdata[ 3* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];		// Stream 3
-		segdata[ 4* length + 2* ix    ] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];		// Stream 4
-		segdata[ 4* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];		// Stream 4
-		segdata[ 5* length + 2* ix    ] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];		// Stream 5
-		segdata[ 5* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];		// Stream 5
-		segdata[ 6* length + 2* ix    ] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];		// Stream 6
-		segdata[ 6* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];		// Stream 6
-		segdata[ 7* length + 2* ix    ] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];		// Stream 7
-		segdata[ 7* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];		// Stream 7
-*/
+		// segdata[             2* ix    ] = weight[(vdifdata_in[4*ix   ] >> 6) & bitmask];		// Stream 0
+		// segdata[             2* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];		// Stream 0
+		// segdata[    length + 2* ix    ] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];		// Stream 1
+		// segdata[    length + 2* ix + 1] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];		// Stream 1
+		// segdata[ 2* length + 2* ix    ] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];		// Stream 2
+		// segdata[ 2* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];		// Stream 2
+		// segdata[ 3* length + 2* ix    ] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];		// Stream 3
+		// segdata[ 3* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];		// Stream 3
+		// segdata[ 4* length + 2* ix    ] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];		// Stream 4
+		// segdata[ 4* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];		// Stream 4
+		// segdata[ 5* length + 2* ix    ] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];		// Stream 5
+		// segdata[ 5* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];		// Stream 5
+		// segdata[ 6* length + 2* ix    ] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];		// Stream 6
+		// segdata[ 6* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];		// Stream 6
+		// segdata[ 7* length + 2* ix    ] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];		// Stream 7
+		// segdata[ 7* length + 2* ix + 1] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];		// Stream 7
 	}
 }
 
@@ -307,7 +326,6 @@ __global__ void segform_16st_2bit(
 {
 	// unsigned char bitmask = 0x03;		// 2-bit mask
 	float	bias = 1.5;
-	// float	weight[] = {-3.0, 1.0, -1.0, 3.0};
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
 	if( (ix >= 0) && (ix < length) ){
 		segdata[             ix] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
@@ -326,24 +344,21 @@ __global__ void segform_16st_2bit(
 		segdata[13* length + ix] = (float)(((vdifdata_in[4*ix +3] >> 5) & 0x01) | ((vdifdata_in[4*ix +3] >> 3) & 0x02) ) - bias ;
 		segdata[14* length + ix] = (float)(((vdifdata_in[4*ix +3] >> 3) & 0x01) | ((vdifdata_in[4*ix +3] >> 1) & 0x02) ) - bias ;
 		segdata[15* length + ix] = (float)(((vdifdata_in[4*ix +3] >> 1) & 0x01) | ((vdifdata_in[4*ix +3] << 1) & 0x02) ) - bias ;
-
-/*
-		segdata[             ix] = weight[ vdifdata_in[4*ix   ] >> 6  & bitmask];		// Stream 0
-		segdata[    length + ix] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];		// Stream 1
-		segdata[ 2* length + ix] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];		// Stream 2
-		segdata[ 3* length + ix] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];		// Stream 3
-		segdata[ 4* length + ix] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];		// Stream 4
-		segdata[ 5* length + ix] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];		// Stream 5
-		segdata[ 6* length + ix] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];		// Stream 6
-		segdata[ 7* length + ix] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];		// Stream 7
-		segdata[ 8* length + ix] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];		// Stream 8
-		segdata[ 9* length + ix] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];		// Stream 9
-		segdata[10* length + ix] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];		// Stream 10
-		segdata[11* length + ix] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];		// Stream 11
-		segdata[12* length + ix] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];		// Stream 12
-		segdata[13* length + ix] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];		// Stream 13
-		segdata[14* length + ix] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];		// Stream 14
-		segdata[15* length + ix] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];		// Stream 15
-*/
+		// segdata[             ix] = weight[ vdifdata_in[4*ix   ] >> 6  & bitmask];		// Stream 0
+		// segdata[    length + ix] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];		// Stream 1
+		// segdata[ 2* length + ix] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];		// Stream 2
+		// segdata[ 3* length + ix] = weight[(vdifdata_in[4*ix   ]     ) & bitmask];		// Stream 3
+		// segdata[ 4* length + ix] = weight[(vdifdata_in[4*ix +1] >> 6) & bitmask];		// Stream 4
+		// segdata[ 5* length + ix] = weight[(vdifdata_in[4*ix +1] >> 4) & bitmask];		// Stream 5
+		// segdata[ 6* length + ix] = weight[(vdifdata_in[4*ix +1] >> 2) & bitmask];		// Stream 6
+		// segdata[ 7* length + ix] = weight[(vdifdata_in[4*ix +1]     ) & bitmask];		// Stream 7
+		// segdata[ 8* length + ix] = weight[(vdifdata_in[4*ix +2] >> 6) & bitmask];		// Stream 8
+		// segdata[ 9* length + ix] = weight[(vdifdata_in[4*ix +2] >> 4) & bitmask];		// Stream 9
+		// segdata[10* length + ix] = weight[(vdifdata_in[4*ix +2] >> 2) & bitmask];		// Stream 10
+		// segdata[11* length + ix] = weight[(vdifdata_in[4*ix +2]     ) & bitmask];		// Stream 11
+		// segdata[12* length + ix] = weight[(vdifdata_in[4*ix +3] >> 6) & bitmask];		// Stream 12
+		// segdata[13* length + ix] = weight[(vdifdata_in[4*ix +3] >> 4) & bitmask];		// Stream 13
+		// segdata[14* length + ix] = weight[(vdifdata_in[4*ix +3] >> 2) & bitmask];		// Stream 14
+		// segdata[15* length + ix] = weight[(vdifdata_in[4*ix +3]     ) & bitmask];		// Stream 15
 	}
 }
