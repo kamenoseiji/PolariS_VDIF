@@ -54,6 +54,7 @@ main(
 	printf("Allocated %d bytes for Shared VDIF data [%d]!\n", MAX_SAMPLE_BUF, param_ptr->shrd_vdifdata_id);
 
     //-------- SHARED cross-power-spectra data area --------
+	printf("Trying to allocate %d bytes for Shared Xspec data [KEY = %d]!\n", XSPEC_SIZE, XSPEC_KEY);
 	if(shm_init_create(
 		XSPEC_KEY,						// ACCESS KEY
 		XSPEC_SIZE,						// Data Area Size

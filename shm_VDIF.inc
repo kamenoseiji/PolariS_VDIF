@@ -44,7 +44,8 @@ union VDIF32byte{
 #define	MAX_NIF			16			// Maximum Number of IF
 #define	Ncross			4			// Number of correlations <XX*>, <XY*>, <YX*>, <YY*>
 #define	SEGDATA_SIZE	MAX_NIF* param_ptr->segLen* param_ptr->segNum* sizeof(float)
-#define	XSPEC_SIZE		MAX_NIF* MAX_NIF* param_ptr->num_ch* sizeof(float)
+// #define	XSPEC_SIZE		MAX_NIF* MAX_NIF* param_ptr->num_ch* sizeof(float)
+#define	XSPEC_SIZE		MAX_NIF* param_ptr->num_ch* sizeof(float)
 #define	MAX_FILE_REC	3600		// Maximum number of records in output file
 #define	POWER_TIME_NUM	1024		// Maximum number of points to plot total power
 

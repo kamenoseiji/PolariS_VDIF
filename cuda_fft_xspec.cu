@@ -93,13 +93,14 @@ main(
 		}
 
 		//-------- Wait for the first half in the S-part
+		//StartTimer();
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
+		StartTimer();
 		usleep(100);	// Wait 0.1 msec
 		part_index  = param_ptr->part_index;
 		page_index  = part_index % 2;	// 2 pages per cycle
-		// StartTimer();
-		// printf("Ready to process Part=%d Cycle=%d Page=%d\n", param_ptr->part_index, cycle_index, page_index);
+		printf("Ready to process Part=%d Page=%d\n", param_ptr->part_index, page_index);
 
 		//-------- SHM -> GPU memory transfer
 		cudaMemcpy( &cuvdifdata_ptr[HALFBUF* page_index], &vdifdata_ptr[HALFBUF* page_index], HALFBUF, cudaMemcpyHostToDevice);
@@ -144,7 +145,7 @@ main(
 			} else { param_ptr->current_rec ++;}
 		}
 		param_ptr->current_rec ++;
-		// printf("%lf [msec]\n", GetTimer());
+		printf("%lf [msec]\n", GetTimer());
 	}	// End of part loop
 /*
 -------------------------------------------- RELEASE the SHM
