@@ -51,7 +51,6 @@ main(
 		if( param_ptr->validity & (FINISH + ABSFIN) ){	break; }
 
 		//-------- Read VDIF from File
-		usleep(10);
 		rv = fread( buf, VDIF_SIZE, 1, dumpfile_ptr );
 		if(rv == 0){
 			printf("Rewind to file head\n");
@@ -60,11 +59,11 @@ main(
 		frameID    = (buf[5] << 16) + (buf[6] << 8) + buf[7];
 		param_ptr->part_index = frameID / FramePerPart;				// Part Number (0 - 7)
 		frame_addr = VDIFDATA_SIZE* (frameID % FramePerPage);		// Write Address in Page
-
 		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
 		memcpy( &vdifdata_ptr[frame_addr], &buf[VDIFHEAD_SIZE], VDIFDATA_SIZE);
 
 		if( param_ptr->part_index != prev_part){
+			// usleep(100000);
 			sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)1; sops.sem_flg = (short)0;
 			semop(param_ptr->sem_data_id, &sops, 1);
 			sops.sem_num = (ushort)SEM_VDIF_POWER; sops.sem_op = (short)1; sops.sem_flg = (short)0;
