@@ -81,7 +81,6 @@ main(
  	param_ptr->current_rec = 0;
 	setvbuf(stdout, (char *)NULL, _IONBF, 0);   // Disable stdout cache
 	while(param_ptr->validity & ACTIVE){
-		StartTimer();
 		if( param_ptr->validity & (FINISH + ABSFIN) ){  break; }
 
 		//-------- Initial setup for cycles
@@ -96,10 +95,10 @@ main(
 		}
 
 		//-------- Wait for the first half in the S-part
-		//StartTimer();
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
 		usleep(10);	// Wait 0.01 msec
+		// StartTimer();
 		part_index  = param_ptr->part_index;
 		page_index  = part_index % 2;	// 2 pages per cycle
 		printf("Ready to process Part=%d Page=%d\n", param_ptr->part_index, page_index);
@@ -147,7 +146,7 @@ main(
 			} else { param_ptr->current_rec ++;}
 		}
 		param_ptr->current_rec ++;
-		printf("%lf [msec]\n", GetTimer());
+		// printf("%lf [msec]\n", GetTimer());
 	}	// End of part loop
 /*
 -------------------------------------------- RELEASE the SHM
