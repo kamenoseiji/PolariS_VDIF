@@ -62,8 +62,8 @@ main(
 		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
 		memcpy( &vdifdata_ptr[frame_addr], &buf[VDIFHEAD_SIZE], VDIFDATA_SIZE);
 
+		usleep(1);
 		if( param_ptr->part_index != prev_part){
-			// usleep(100000);
 			sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)1; sops.sem_flg = (short)0;
 			semop(param_ptr->sem_data_id, &sops, 1);
 			sops.sem_num = (ushort)SEM_VDIF_POWER; sops.sem_op = (short)1; sops.sem_flg = (short)0;

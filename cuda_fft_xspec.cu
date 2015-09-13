@@ -75,7 +75,7 @@ main(
  		fprintf(stderr, "Cuda Error : Failed to create plan.\n"); return(-1); }
 //------------------------------------------ Parameters for S-part format
  	segment_offset(param_ptr, offset);
-	// for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
+	for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
 //------------------------------------------ K5 Header and Data
 	cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
  	param_ptr->current_rec = 0;
