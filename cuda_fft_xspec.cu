@@ -75,7 +75,7 @@ main(
  		fprintf(stderr, "Cuda Error : Failed to create plan.\n"); return(-1); }
 //------------------------------------------ Parameters for S-part format
  	segment_offset(param_ptr, offset);
-	// for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
+	for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
 //------------------------------------------ K5 Header and Data
 	cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
  	param_ptr->current_rec = 0;
@@ -101,13 +101,11 @@ main(
 		// StartTimer();
 		part_index  = param_ptr->part_index;
 		page_index  = part_index % 2;	// 2 pages per cycle
-		printf("Ready to process Part=%d Page=%d\n", param_ptr->part_index, page_index);
+		// printf("... Ready to process Part=%d Page=%d\n", part_index, page_index);
 
 		//-------- SHM -> GPU memory transfer
 		cudaMemcpy( &cuvdifdata_ptr[HALFBUF* page_index], &vdifdata_ptr[HALFBUF* page_index], HALFBUF, cudaMemcpyHostToDevice);
-
 		//-------- Segment Format
-
 		Dg.x=NFFT/512; Dg.y=1; Dg.z=1;
 		for(index=0; index < NsegPart; index ++){
 			seg_index = page_index* NsegPart + index;

@@ -9,6 +9,7 @@
 #define MAX_LOOP    10      // Maximum number of iterations
 #define MAX(a,b)    a>b?a:b // Larger Value
 
+int	bitDist1st2bit(int, unsigned char *, unsigned int *);
 int	bitDist2st2bit(int, unsigned char *, unsigned int *);
 int	bitDist4st2bit(int, unsigned char *, unsigned int *);
 int	bitDist8st2bit(int, unsigned char *, unsigned int *);
@@ -38,11 +39,12 @@ main(
 	int				modeSW = 0;
 
 	//-------- Pointer to functions
- 	int	(*bitCount[4])( int, unsigned char *, unsigned int *);
+ 	int	(*bitCount[5])( int, unsigned char *, unsigned int *);
  	bitCount[0] = bitDist2st2bit;
- 	bitCount[1] = bitDist4st2bit;
- 	bitCount[2] = bitDist8st2bit;
- 	bitCount[3] = bitDist16st2bit;
+ 	bitCount[1] = bitDist2st2bit;
+ 	bitCount[2] = bitDist4st2bit;
+ 	bitCount[3] = bitDist8st2bit;
+ 	bitCount[4] = bitDist16st2bit;
 
 //------------------------------------------ Access to the SHARED MEMORY
 	shrd_param_id = shmget( SHM_PARAM_KEY, sizeof(struct SHM_PARAM), 0444);
@@ -50,10 +52,11 @@ main(
 	vdifhead_ptr = (unsigned char *)shmat(param_ptr->shrd_vdifhead_id, NULL, SHM_RDONLY);
 	vdifdata_ptr = (unsigned char *)shmat(param_ptr->shrd_vdifdata_id, NULL, SHM_RDONLY);
 	switch( param_ptr->num_st ){
- 		case  2 :	modeSW = 0; break;
- 		case  4 :	modeSW = 1; break;
- 		case  8 :	modeSW = 2; break;
- 		case 16 :	modeSW = 3; break;
+ 		case  1 :	modeSW = 0; break;
+ 		case  2 :	modeSW = 1; break;
+ 		case  4 :	modeSW = 2; break;
+ 		case  8 :	modeSW = 3; break;
+ 		case 16 :	modeSW = 4; break;
  	}
 //------------------------------------------ VSI Header and Data
  	param_ptr->current_rec = 0;
@@ -76,14 +79,14 @@ main(
 
 		//-------- BitDist
 		(*bitCount[modeSW])(HALFBUF/4, &vdifdata_ptr[HALFBUF* page_index], bitDist); 
-		printf("Power [dB] = ");
+		// printf("Power [dB] = ");
 		for(IF_index=0; IF_index<param_ptr->num_st; IF_index ++){
 		 	gaussBit(4, &bitDist[4* IF_index], param, param_err );
 		 	param_ptr->power[IF_index] = 1.0 / (param[0]* param[0]);
-		 	printf("%5.2f ", 10.0* log10(param_ptr->power[IF_index]));
+		 	// printf("%5.2f ", 10.0* log10(param_ptr->power[IF_index]));
 		}
 		sops.sem_num = (ushort)SEM_POWER; sops.sem_op = (short)1; sops.sem_flg = (short)0; semop( param_ptr->sem_data_id, &sops, 1);
-		printf("\n");
+		// printf("\n");
 
 	}	// End of part loop
 /*
@@ -250,12 +253,41 @@ int	VDIFutc(
 
 	return(ref_sec);
 }
+//-------- 2-Bit 1-st Distribution Counter
+int bitDist1st2bit(
+	int				nbytes,		// Number of bytes to examine
+	unsigned char	*data_ptr,	// 2-bit quantized data stream (1 IF)
+	unsigned int	*bitDist)	// Bit distribution counter	(1 IF x 4 levels)
+{
+	int	bitmask = 0x03;			// 2-bit mask
+	int	nlevel  = 4;			// Number of levels
+	int index;					// Counter
+	for(index=0; index<nbytes; index+=4){			// 4 bytes per sample
+		bitDist[((data_ptr[index  ]     ) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index  ] >> 2) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index  ] >> 4) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index  ] >> 6) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+1]     ) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+1] >> 2) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+1] >> 4) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+1] >> 6) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+2]     ) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+2] >> 2) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+2] >> 4) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+2] >> 6) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+3]     ) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+3] >> 2) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+3] >> 4) & bitmask)] ++;	// IF-0 bitdist
+		bitDist[((data_ptr[index+3] >> 6) & bitmask)] ++;	// IF-0 bitdist
+	}
+	return(nbytes);
+}
 
 //-------- 2-Bit 2-st Distribution Counter
 int bitDist2st2bit(
 	int				nbytes,		// Number of bytes to examine
-	unsigned char	*data_ptr,	// 2-bit quantized data stream (8 IF)
-	unsigned int	*bitDist)	// Bit distribution counter	(8 IF x 4 levels)
+	unsigned char	*data_ptr,	// 2-bit quantized data stream (2 IF)
+	unsigned int	*bitDist)	// Bit distribution counter	(2 IF x 4 levels)
 {
 	int	bitmask = 0x03;			// 2-bit mask
 	int	nlevel  = 4;			// Number of levels
@@ -280,11 +312,12 @@ int bitDist2st2bit(
 	}
 	return(nbytes);
 }
+
 //-------- 2-Bit 4-st Distribution Counter
 int bitDist4st2bit(
 	int				nbytes,		// Number of bytes to examine
-	unsigned char	*data_ptr,	// 2-bit quantized data stream (8 IF)
-	unsigned int	*bitDist)	// Bit distribution counter	(8 IF x 4 levels)
+	unsigned char	*data_ptr,	// 2-bit quantized data stream (4 IF)
+	unsigned int	*bitDist)	// Bit distribution counter	(4 IF x 4 levels)
 {
 	int	bitmask = 0x03;			// 2-bit mask
 	int	nlevel  = 4;			// Number of levels
