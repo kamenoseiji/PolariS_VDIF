@@ -25,7 +25,7 @@ main(
 //------------------------------------------ WAIT UNTIL FINISH
     while((param_ptr->validity & ABSFIN) == 0 ){
 
-		if( (param_ptr->integ_rec > 0) && (param_ptr->current_rec >= param_ptr->integ_rec - 1)){
+		if( (param_ptr->integ_rec > 0) && (param_ptr->current_rec/8 >= param_ptr->integ_rec - 1)){
 			param_ptr->validity |= FINISH;
 		}
 

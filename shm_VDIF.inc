@@ -21,10 +21,20 @@ union VDIF32byte{
 #define	SHM_PARAM_KEY	0x1000
 #define	VDIFHEAD_KEY 	0x0800
 #define	VDIFDATA_KEY	0x0400
-#define	SEGDATA_KEY		0x0200
-#define	XSPEC_KEY		0x0100
-
+#define	XSPEC_KEY		0x0200
+#define SHM_PARAM_FILE	"param.shm"	// File to record shared memory information
+#define SHM_VDIFH_FILE	"vdifh.shm"	// File to record shared memory information
+#define SHM_VDIFD_FILE	"vdifd.shm"	// File to record shared memory information
+#define SHM_XSPEC_FILE	"xspec.shm"	// File to record shared memory information
+#define SHM_FMT         "SHM_KEY(HEX)    SHM_ID     SHMSIZE(bytes)\n         %X        %d                %d"
 //-------- Shared Memory Size
+// VDIF Buffer Memory Map
+//  |<--------------------- 1 sec --------------------------------->|
+//  | part0 | part1 | part2 | part3 | part4 | part5 | part6 | part7 | 
+//  | page0 | page1 | page0 | page1 | page0 | page1 | page0 | page1 |
+//  |<--- 32 MB --->|
+//  | <16MB>|
+//
 #define SEM_NUM			16			// Number of Semaphores
 #define	VDIF_SIZE		1312		// 1312 bytes = Header (32 bytes) + Data (1280 bytes)
 #define	VDIFHEAD_SIZE	32			// VDIF Header size
@@ -32,7 +42,7 @@ union VDIF32byte{
 #define	MAX_SAMPLE_BUF	33554432	// 32 MB (1/4 sec for 1 Gbps)
 #define	HALFBUF			16777216	// 16 MB per 1/8 sec
 #define FramePerSec		  100000	// 128 MB/sec / (1280 bytes/frame) = 100000 frame per sec
-#define FramePerPage	   25000	// 100000 frame/sec / 4 page/sec =  25000 frame/page
+#define FramePerBUF 	   25000	// 100000 frame/sec / 4 Buf/sec =  25000 frame/buf
 #define FramePerPart	   12500	// 25000 frame/page / 2 part/page=  12500 frame/part
 #define PARTNUM			8			// Number of Parts in 1 sec
 #define	NST			(param_ptr->num_st)		// Numver of streams
@@ -178,6 +188,3 @@ struct vdifhead{
 	unsigned int		ref_secS;	// Second from reference epoch in source
 	unsigned int		sec_count;	// 1PPS counter
 };
-
-//-------- VDIF simulation data
-#define	VDIF_simFile	"/DATA/VERA7.dump"

@@ -19,6 +19,7 @@ main(
 	struct	SHM_PARAM	*param_ptr;
 	char	cmd[8][16];					// Command line arguments
 	char	pgdev[16];					// PGPLOT Device
+	char	dumpFname[256];				// File name to dump
 	int		pid;						// Process ID
 	int		integPP=0;					// Maximum record number [sec]
 	int		bandWidth=16;				// Bandwidth [MHz]: 2/4/8/16/32/64/128/256/512/1024
@@ -28,19 +29,21 @@ main(
 	int		ARecFlag   = 0;				// Autocorr Recording Flag
 	int		CRecFlag   = 0;				// Autocorr Recording Flag
 	int		statusFlag = 0;				// Used for option parser
+	int		dumpFlag   = 0;				// Dump samples into a file
 //------------------------------------------ Option Parser
-	while(( ch_option = getopt(argc, argv, "a:b:c:f:hi:n:p:q:s:Sv:")) != -1){
+	while(( ch_option = getopt(argc, argv, "a:b:c:d:f:hi:n:p:q:s:Sv:")) != -1){
 		switch(ch_option){
 			case 'a':	ARecFlag |= ((valid_bit(optarg) & 0xffff) <<  16);	break;
 			case 'b':	bandWidth = atoi(optarg);	break;
 			case 'c':	CRecFlag |= (valid_bit(optarg) & 0xffff);	break;
+			case 'd':	dumpFlag |= 0x01; strcpy(dumpFname, optarg);	break;
 			case 'h':	usage();	return(0);
 			case 'i':	integPP = atoi(optarg);	break;
 			case 'n':	num_st = atoi(optarg);	break;
 			case 'p':	ARecFlag |= (valid_bit(optarg) & 0xffff);	break;
 			case 'q':	qbit = pow2round(atoi(optarg));	break;
 			case 's':	num_ch = pow2round(atoi(optarg));	break;
-			case 'S':	statusFlag |= SIMMODE;	break;
+			case 'S':	statusFlag |= SIMMODE; strcpy(dumpFname, optarg); break;
 			case 'v':	statusFlag |= PGPLOT; strcpy(pgdev, optarg);	break;
 		}	
 	}
@@ -84,17 +87,25 @@ main(
 	if( fork() == 0){
 		//-------- Simulation Mode
 		if( param_ptr->validity & SIMMODE ){
+			strcpy(cmd[1], dumpFname);
 			pid = getpid(); sprintf(cmd[0], "VDIF_sim");
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-			if( execl( VDIF_SIM, cmd[0], (char *)NULL ) == -1){
+			if( execl( VDIF_SIM, cmd[0], cmd[1], (char *)NULL ) == -1){
 				perror("Can't Create Chiled Proces!!\n"); return(-1);
 			}
 		} else {
 		//-------- Real Mode
 			pid = getpid(); sprintf(cmd[0], "VDIF_store");
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-			if( execl( VDIF_STORE, cmd[0], (char *)NULL ) == -1){
-				perror("Can't Create Chiled Proces!!\n"); return(-1);
+			if(dumpFlag){
+				strcpy(cmd[1], dumpFname);
+				if( execl( VDIF_STORE, cmd[0], cmd[1], (char *)NULL ) == -1){
+					perror("Can't Create Chiled Proces!!\n"); return(-1);
+				}
+			} else {
+				if( execl( VDIF_STORE, cmd[0], (char *)NULL ) == -1){
+					perror("Can't Create Chiled Proces!!\n"); return(-1);
+				}
 			}
 		}
 	}
@@ -142,6 +153,7 @@ int usage(){
 	fprintf(stderr, "  -b : Specify bandwidth [MHz] for each IF. Default: 8 MHz.\n");
 	fprintf(stderr, "  -c : Specify crosscorrelation files not saved.\n");
 	fprintf(stderr, "       0 -> CH0xCH2 is recorded, 01 -> all Xcorrs are recorded. Default: no xcorr, recoreded. \n");
+	fprintf(stderr, "  -d : Dump sampling data into a file specified following the option.\n");
 	fprintf(stderr, "  -h : Show help \n");
 	fprintf(stderr, "  -i : Recording time [sec]. Unless specified, polaris keep recordeng until shm_init.\n"); 
 	fprintf(stderr, "  -n : Number of streams.\n"); 

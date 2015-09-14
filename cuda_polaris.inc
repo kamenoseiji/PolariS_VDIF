@@ -188,25 +188,28 @@ __global__ void segform_2st_2bit(
 {
 	int	oct_length = length/8;
 	// unsigned char bitmask = 0x03;		// 2-bit mask
+	int ix8, ix4;
 	float	bias = 1.5;
 	int ix = blockIdx.x* blockDim.x + threadIdx.x;
 	if( (ix >= 0) && (ix < oct_length) ){
-		segdata[         8* ix    ] = (float)(((vdifdata_in[4*ix   ] >> 7) & 0x01) | ((vdifdata_in[4*ix   ] >> 5) & 0x02) ) - bias ;
-		segdata[         8* ix + 1] = (float)(((vdifdata_in[4*ix   ] >> 5) & 0x01) | ((vdifdata_in[4*ix   ] >> 3) & 0x02) ) - bias ;
-		segdata[         8* ix + 2] = (float)(((vdifdata_in[4*ix   ] >> 3) & 0x01) | ((vdifdata_in[4*ix   ] >> 1) & 0x02) ) - bias ;
-		segdata[         8* ix + 3] = (float)(((vdifdata_in[4*ix   ] >> 1) & 0x01) | ((vdifdata_in[4*ix   ] << 1) & 0x02) ) - bias ;
-		segdata[         8* ix + 4] = (float)(((vdifdata_in[4*ix +1] >> 7) & 0x01) | ((vdifdata_in[4*ix +1] >> 5) & 0x02) ) - bias ;
-		segdata[         8* ix + 5] = (float)(((vdifdata_in[4*ix +1] >> 5) & 0x01) | ((vdifdata_in[4*ix +1] >> 3) & 0x02) ) - bias ;
-		segdata[         8* ix + 6] = (float)(((vdifdata_in[4*ix +1] >> 3) & 0x01) | ((vdifdata_in[4*ix +1] >> 1) & 0x02) ) - bias ;
-		segdata[         8* ix + 7] = (float)(((vdifdata_in[4*ix +1] >> 1) & 0x01) | ((vdifdata_in[4*ix +1] << 1) & 0x02) ) - bias ;
-		segdata[length + 8* ix    ] = (float)(((vdifdata_in[4*ix +2] >> 7) & 0x01) | ((vdifdata_in[4*ix +2] >> 5) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 1] = (float)(((vdifdata_in[4*ix +2] >> 5) & 0x01) | ((vdifdata_in[4*ix +2] >> 3) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 2] = (float)(((vdifdata_in[4*ix +2] >> 3) & 0x01) | ((vdifdata_in[4*ix +2] >> 1) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 3] = (float)(((vdifdata_in[4*ix +2] >> 1) & 0x01) | ((vdifdata_in[4*ix +2] << 1) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 4] = (float)(((vdifdata_in[4*ix +3] >> 7) & 0x01) | ((vdifdata_in[4*ix +3] >> 5) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 5] = (float)(((vdifdata_in[4*ix +3] >> 5) & 0x01) | ((vdifdata_in[4*ix +3] >> 3) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 6] = (float)(((vdifdata_in[4*ix +3] >> 3) & 0x01) | ((vdifdata_in[4*ix +3] >> 1) & 0x02) ) - bias ;
-		segdata[length + 8* ix + 7] = (float)(((vdifdata_in[4*ix +3] >> 1) & 0x01) | ((vdifdata_in[4*ix +3] << 1) & 0x02) ) - bias ;
+		ix4 = 4* ix; ix8 = 2* ix4;
+		segdata[         ix8    ] = (float)(((vdifdata_in[ix4   ] >> 7) & 0x01) | ((vdifdata_in[ix4   ] >> 5) & 0x02) ) - bias ;
+		segdata[         ix8 + 1] = (float)(((vdifdata_in[ix4   ] >> 5) & 0x01) | ((vdifdata_in[ix4   ] >> 3) & 0x02) ) - bias ;
+		segdata[         ix8 + 2] = (float)(((vdifdata_in[ix4   ] >> 3) & 0x01) | ((vdifdata_in[ix4   ] >> 1) & 0x02) ) - bias ;
+		segdata[         ix8 + 3] = (float)(((vdifdata_in[ix4   ] >> 1) & 0x01) | ((vdifdata_in[ix4   ] << 1) & 0x02) ) - bias ;
+		segdata[         ix8 + 4] = (float)(((vdifdata_in[ix4 +1] >> 7) & 0x01) | ((vdifdata_in[ix4 +1] >> 5) & 0x02) ) - bias ;
+		segdata[         ix8 + 5] = (float)(((vdifdata_in[ix4 +1] >> 5) & 0x01) | ((vdifdata_in[ix4 +1] >> 3) & 0x02) ) - bias ;
+		segdata[         ix8 + 6] = (float)(((vdifdata_in[ix4 +1] >> 3) & 0x01) | ((vdifdata_in[ix4 +1] >> 1) & 0x02) ) - bias ;
+		segdata[         ix8 + 7] = (float)(((vdifdata_in[ix4 +1] >> 1) & 0x01) | ((vdifdata_in[ix4 +1] << 1) & 0x02) ) - bias ;
+		segdata[length + ix8    ] = (float)(((vdifdata_in[ix4 +2] >> 7) & 0x01) | ((vdifdata_in[ix4 +2] >> 5) & 0x02) ) - bias ;
+		segdata[length + ix8 + 1] = (float)(((vdifdata_in[ix4 +2] >> 5) & 0x01) | ((vdifdata_in[ix4 +2] >> 3) & 0x02) ) - bias ;
+		segdata[length + ix8 + 2] = (float)(((vdifdata_in[ix4 +2] >> 3) & 0x01) | ((vdifdata_in[ix4 +2] >> 1) & 0x02) ) - bias ;
+		segdata[length + ix8 + 3] = (float)(((vdifdata_in[ix4 +2] >> 1) & 0x01) | ((vdifdata_in[ix4 +2] << 1) & 0x02) ) - bias ;
+		segdata[length + ix8 + 4] = (float)(((vdifdata_in[ix4 +3] >> 7) & 0x01) | ((vdifdata_in[ix4 +3] >> 5) & 0x02) ) - bias ;
+		segdata[length + ix8 + 5] = (float)(((vdifdata_in[ix4 +3] >> 5) & 0x01) | ((vdifdata_in[ix4 +3] >> 3) & 0x02) ) - bias ;
+		segdata[length + ix8 + 6] = (float)(((vdifdata_in[ix4 +3] >> 3) & 0x01) | ((vdifdata_in[ix4 +3] >> 1) & 0x02) ) - bias ;
+		segdata[length + ix8 + 7] = (float)(((vdifdata_in[ix4 +3] >> 1) & 0x01) | ((vdifdata_in[ix4 +3] << 1) & 0x02) ) - bias ;
+		//
 		// segdata[         8* ix    ] = weight[(vdifdata_in[4*ix   ] >> 6) & bitmask];	// Stream 0
 		// segdata[         8* ix + 1] = weight[(vdifdata_in[4*ix   ] >> 4) & bitmask];	// Stream 0
 		// segdata[         8* ix + 2] = weight[(vdifdata_in[4*ix   ] >> 2) & bitmask];	// Stream 0

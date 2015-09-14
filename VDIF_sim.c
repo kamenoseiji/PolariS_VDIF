@@ -36,7 +36,7 @@ main(
 	}
 	printf("Succeeded to access the shared parameter [%d]!\n",  param_ptr->shrd_param_id);
 //------------------------------------------ Access the Dump File
-	if( (dumpfile_ptr = fopen(VDIF_simFile, "r")) == NULL){
+	if( (dumpfile_ptr = fopen(argv[1], "r")) == NULL){
 		perror(" Can't open dump file!!");	return(-1);}
 
     //-------- SHARED VDIF Header and Data to Store --------
@@ -58,7 +58,7 @@ main(
 		}
 		frameID    = (buf[5] << 16) + (buf[6] << 8) + buf[7];
 		param_ptr->part_index = frameID / FramePerPart;				// Part Number (0 - 7)
-		frame_addr = VDIFDATA_SIZE* (frameID % FramePerPage);		// Write Address in Page
+		frame_addr = VDIFDATA_SIZE* (frameID % FramePerBUF);		// Write Address in Page
 		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
 		memcpy( &vdifdata_ptr[frame_addr], &buf[VDIFHEAD_SIZE], VDIFDATA_SIZE);
 

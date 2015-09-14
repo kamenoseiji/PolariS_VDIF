@@ -28,7 +28,7 @@ main(
 	int		prev_part  = -1;			// Part Index
 	struct sockaddr_in	addr;			//  Socket Address
 	struct ip_mreq		mreq;			// Multicast Request
-	// FILE	*dumpfile_ptr;				// Dump File
+	FILE	*dumpfile_ptr;				// Dump File
 
 	unsigned char	buf[VDIF_SIZE];		// 1312 bytes
 //------------------------------------------ Open Socket to OCTAVIA
@@ -66,7 +66,9 @@ main(
 	vdifhead_ptr = shmat( param_ptr->shrd_vdifhead_id, NULL, 0 );
 	vdifdata_ptr = shmat( param_ptr->shrd_vdifdata_id, NULL, 0 );
 	param_ptr->validity |= ENABLE;		// Set Shared memory readiness bit to 1
-	// dumpfile_ptr = fopen("VDIF.dump", "w");
+	if(argc > 1){
+		dumpfile_ptr = fopen(argv[1], "w");
+	}
 //------------------------------------------ Open Socket to OCTAVIA
 	setvbuf(stdout, (char *)NULL, _IONBF, 0); 	// Disable stdout cache
 	param_ptr->validity |= ACTIVE;		// Set Sampling Activity Bit to 1
@@ -77,12 +79,13 @@ main(
 
 		//-------- Read VDIF packet
 		rv = recv(sock, buf, sizeof(buf), 0);
-		// fwrite(buf, VDIF_SIZE, 1, dumpfile_ptr);
+		if(argc > 1){
+		 	fwrite(buf, VDIF_SIZE, 1, dumpfile_ptr);
+		}
 		frameID    = (buf[5] << 16) + (buf[6] << 8) + buf[7];
 		param_ptr->part_index = frameID / FramePerPart;				// Part Number (0 - 7)
-		frame_addr = VDIFDATA_SIZE* (frameID % FramePerPage);		// Write Address in Page
+		frame_addr = VDIFDATA_SIZE* (frameID % FramePerBUF);		// Write Address in BUF
 		if( param_ptr->part_index == 0){param_ptr->validity |= ENABLE;}
-
 		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
 		memcpy( &vdifdata_ptr[frame_addr], &buf[VDIFHEAD_SIZE], VDIFDATA_SIZE);
 
@@ -97,7 +100,7 @@ main(
 
 	}
 //------------------------------------------ Stop Sampling
-	// fclose(dumpfile_ptr);
+	fclose(dumpfile_ptr);
 	close(sock);
 	param_ptr->validity &= (~ACTIVE);		// Set Sampling Activity Bit to 0
 

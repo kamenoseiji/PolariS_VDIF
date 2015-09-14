@@ -7,7 +7,7 @@
 #include <cufft.h>
 #include <string.h>
 #include <math.h>
-#include </usr/local/cuda-6.0/samples/common/inc/timer.h>
+#include </usr/local/cuda/samples/common/inc/timer.h>
 #include "cuda_polaris.inc"
 #define SCALEFACT 1.0/(NFFT* NsegSec)
 
@@ -97,8 +97,8 @@ main(
 		//-------- Wait for the first half in the S-part
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
-		usleep(10);	// Wait 0.01 msec
-		// StartTimer();
+		usleep(8);	// Wait 0.01 msec
+		StartTimer();
 		part_index  = param_ptr->part_index;
 		page_index  = part_index % 2;	// 2 pages per cycle
 		printf("Ready to process Part=%d Page=%d\n", param_ptr->part_index, page_index);
@@ -146,7 +146,7 @@ main(
 			} else { param_ptr->current_rec ++;}
 		}
 		param_ptr->current_rec ++;
-		// printf("%lf [msec]\n", GetTimer());
+		printf("%lf [msec]\n", GetTimer());
 	}	// End of part loop
 /*
 -------------------------------------------- RELEASE the SHM
