@@ -161,14 +161,14 @@ struct	SHM_PARAM{
 #define	SEM_POWER		11			// Total Power Measurement
 
 //-------- Chiled Processes
-#define SHM_PARM	"/usr/local/custom/bin/shm_param"
-#define SHM_ALLOC	"/usr/local/custom/bin/shm_alloc"
-#define VDIF_STORE	"/usr/local/custom/bin/VDIF_store"
-#define VDIF_SIM	"/usr/local/custom/bin/VDIF_sim"
-#define BITDIST		"/usr/local/custom/bin/bitDist"
-#define CUDA_FFT	"/usr/local/custom/bin/cuda_fft_xspec"
-#define SPEC_VIEW	"/usr/local/custom/bin/shm_spec_view"
-#define POWER_VIEW	"/usr/local/custom/bin/shm_power_view"
+#define SHM_PARM	"shm_param"
+#define SHM_ALLOC	"shm_alloc"
+#define VDIF_STORE	"VDIF_store"
+#define VDIF_SIM	"VDIF_sim"
+#define BITDIST		"bitDist"
+#define CUDA_FFT	"cuda_fft_xspec"
+#define SPEC_VIEW	"shm_spec_view"
+#define POWER_VIEW	"shm_power_view"
 
 
 //-------- Header Struct

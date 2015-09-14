@@ -30,6 +30,17 @@ main(
 	int		CRecFlag   = 0;				// Autocorr Recording Flag
 	int		statusFlag = 0;				// Used for option parser
 	int		dumpFlag   = 0;				// Dump samples into a file
+//------------------------------------------ Get Path
+	FILE	*file_ptr;
+	char	path_dir[256];
+	char	path_str[256];
+	if( (file_ptr = popen("which shm_param", "r")) == NULL){
+		perror("No active path to shm_param!!\n"); return(-1);
+	}
+	while( fgets(path_dir, 256, file_ptr) != NULL){
+		path_dir[strlen(path_dir) - 10] = 0x00;
+	}
+	pclose(file_ptr);
 //------------------------------------------ Option Parser
 	while(( ch_option = getopt(argc, argv, "a:b:c:d:f:hi:n:p:q:s:Sv:")) != -1){
 		switch(ch_option){
@@ -49,9 +60,10 @@ main(
 	}
 //------------------------------------------ Start shm_param()
 	if( fork() == 0){
-		pid = getpid(); sprintf(cmd[0], "shm_param");
+		pid = getpid(); sprintf(cmd[0], SHM_PARM);
+		sprintf(path_str, "%s%s", path_dir, SHM_PARM);
 		printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-		if( execl( SHM_PARM, cmd[0], (char *)NULL ) == -1){
+		if( execl( path_str, cmd[0], (char *)NULL ) == -1){
 			perror("Can't Create Chiled Proces!!\n"); return(-1);
 		}
 	}
@@ -76,9 +88,11 @@ main(
 	printf("%d Segments per part\n", NsegPart);
 //------------------------------------------ Start shm_alloc()
 	if( fork() == 0){
-		pid = getpid(); sprintf(cmd[0], "shm_alloc");
+		pid = getpid(); sprintf(cmd[0], SHM_ALLOC);
+		sprintf(path_str, "%s%s", path_dir, SHM_ALLOC);
+		printf("%s\n", path_str);
 		printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-		if( execl( SHM_ALLOC, cmd[0], (char *)NULL ) == -1){
+		if( execl( path_str, cmd[0], (char *)NULL ) == -1){
 			perror("Can't Create Chiled Proces!!\n"); return(-1);
 		}
 	}
@@ -88,22 +102,24 @@ main(
 		//-------- Simulation Mode
 		if( param_ptr->validity & SIMMODE ){
 			strcpy(cmd[1], dumpFname);
-			pid = getpid(); sprintf(cmd[0], "VDIF_sim");
+			pid = getpid(); sprintf(cmd[0], VDIF_SIM);
+			sprintf(path_str, "%s%s", path_dir, VDIF_SIM);
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-			if( execl( VDIF_SIM, cmd[0], cmd[1], (char *)NULL ) == -1){
+			if( execl( path_str, cmd[0], cmd[1], (char *)NULL ) == -1){
 				perror("Can't Create Chiled Proces!!\n"); return(-1);
 			}
 		} else {
 		//-------- Real Mode
-			pid = getpid(); sprintf(cmd[0], "VDIF_store");
+			pid = getpid(); sprintf(cmd[0], VDIF_STORE);
+			sprintf(path_str, "%s%s", path_dir, VDIF_STORE);
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
 			if(dumpFlag){
 				strcpy(cmd[1], dumpFname);
-				if( execl( VDIF_STORE, cmd[0], cmd[1], (char *)NULL ) == -1){
+				if( execl( path_str, cmd[0], cmd[1], (char *)NULL ) == -1){
 					perror("Can't Create Chiled Proces!!\n"); return(-1);
 				}
 			} else {
-				if( execl( VDIF_STORE, cmd[0], (char *)NULL ) == -1){
+				if( execl( path_str, cmd[0], (char *)NULL ) == -1){
 					perror("Can't Create Chiled Proces!!\n"); return(-1);
 				}
 			}
@@ -113,16 +129,18 @@ main(
 	if( param_ptr->validity & PGPLOT ){
 		strcpy(cmd[1], pgdev);
 		if( fork() == 0){
-			pid = getpid(); sprintf(cmd[0], "shm_power_view");
+			pid = getpid(); sprintf(cmd[0], POWER_VIEW);
+			sprintf(path_str, "%s%s", path_dir, POWER_VIEW);
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-			if( execl( POWER_VIEW, cmd[0], cmd[1], (char *)NULL ) == -1){
+			if( execl( path_str, cmd[0], cmd[1], (char *)NULL ) == -1){
 				perror("Can't Create Chiled Proces!!\n"); return(-1);
 			}
 		}
 		if( fork() == 0){
-			pid = getpid(); sprintf(cmd[0], "shm_spec_view");
+			pid = getpid(); sprintf(cmd[0], SPEC_VIEW);
+			sprintf(path_str, "%s%s", path_dir, SPEC_VIEW);
 			printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-			if( execl( SPEC_VIEW, cmd[0], cmd[1], (char *)NULL ) == -1){
+			if( execl( path_str, cmd[0], cmd[1], (char *)NULL ) == -1){
 				perror("Can't Create Chiled Proces!!\n"); return(-1);
 			}
 		}
@@ -130,16 +148,18 @@ main(
 //------------------------------------------ Start CUDA FFT
 	sleep(1);		// Wait 1 sec
 	if( fork() == 0){
-		pid = getpid(); sprintf(cmd[0], "cuda_fft_xspec");
+		pid = getpid(); sprintf(cmd[0], CUDA_FFT);
+		sprintf(path_str, "%s%s", path_dir, CUDA_FFT);
 		printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-		if( execl( CUDA_FFT, cmd[0], (char *)NULL ) == -1){
+		if( execl( path_str, cmd[0], (char *)NULL ) == -1){
 			perror("Can't Create Chiled Proces!!\n"); return(-1);
 		}
 	}
 	if( fork() == 0){
-		pid = getpid(); sprintf(cmd[0], "bitDist");
+		pid = getpid(); sprintf(cmd[0], BITDIST);
+		sprintf(path_str, "%s%s", path_dir, BITDIST);
 		printf(" Exec %s as Chiled Process [PID = %d]\n", cmd[0], pid);
-		if( execl( BITDIST, cmd[0], (char *)NULL ) == -1){
+		if( execl( path_str, cmd[0], (char *)NULL ) == -1){
 			perror("Can't Create Chiled Proces!!\n"); return(-1);
 		}
 	}

@@ -75,7 +75,7 @@ main(
  		fprintf(stderr, "Cuda Error : Failed to create plan.\n"); return(-1); }
 //------------------------------------------ Parameters for S-part format
  	segment_offset(param_ptr, offset);
-	for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
+	// for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
 //------------------------------------------ K5 Header and Data
 	cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
  	param_ptr->current_rec = 0;
@@ -98,7 +98,7 @@ main(
 		sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)-1; sops.sem_flg = (short)0;
 		semop( param_ptr->sem_data_id, &sops, 1);
 		usleep(8);	// Wait 0.01 msec
-		StartTimer();
+		// StartTimer();
 		part_index  = param_ptr->part_index;
 		page_index  = part_index % 2;	// 2 pages per cycle
 		printf("Ready to process Part=%d Page=%d\n", param_ptr->part_index, page_index);
@@ -146,7 +146,7 @@ main(
 			} else { param_ptr->current_rec ++;}
 		}
 		param_ptr->current_rec ++;
-		printf("%lf [msec]\n", GetTimer());
+		// printf("%lf [msec]\n", GetTimer());
 	}	// End of part loop
 /*
 -------------------------------------------- RELEASE the SHM
