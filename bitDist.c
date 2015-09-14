@@ -40,7 +40,7 @@ main(
 
 	//-------- Pointer to functions
  	int	(*bitCount[5])( int, unsigned char *, unsigned int *);
- 	bitCount[0] = bitDist2st2bit;
+ 	bitCount[0] = bitDist1st2bit;
  	bitCount[1] = bitDist2st2bit;
  	bitCount[2] = bitDist4st2bit;
  	bitCount[3] = bitDist8st2bit;

@@ -20,7 +20,6 @@ main(
 {
 	int		shrd_param_id;				// Shared Memory ID
 	int		index;						// General Index
-	int		part_index;					// Index for Part (to reserve)
 	int		page_index;					// Index for page in buffer (2 pages per cycle)
 	int		seg_index;					// Index for Segment
 	int		offset[16384];				// Segment offset position
@@ -48,7 +47,6 @@ main(
  	segform[2] = segform_4st_2bit;
  	segform[3] = segform_8st_2bit;
  	segform[4] = segform_16st_2bit;
-
 //------------------------------------------ Access to the SHARED MEMORY
 	shrd_param_id = shmget( SHM_PARAM_KEY, sizeof(struct SHM_PARAM), 0444);
 	param_ptr  = (struct SHM_PARAM *)shmat(shrd_param_id, NULL, 0);
@@ -75,7 +73,7 @@ main(
  		fprintf(stderr, "Cuda Error : Failed to create plan.\n"); return(-1); }
 //------------------------------------------ Parameters for S-part format
  	segment_offset(param_ptr, offset);
-	for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
+	// for(index=0; index< 2*NsegPart; index++){	printf("Offset[%d] = %d\n", index, offset[index]);}
 //------------------------------------------ K5 Header and Data
 	cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
  	param_ptr->current_rec = 0;
@@ -84,7 +82,7 @@ main(
 		if( param_ptr->validity & (FINISH + ABSFIN) ){  break; }
 
 		//-------- Initial setup for cycles
-		if( param_ptr->part_index == 0){
+		if( param_ptr->buf_index == 0){
 			cudaMemset( cuPowerSpec, 0, NST* NFFT2* sizeof(float));		// Clear Power Spectrum to accumulate
 		}
 
@@ -99,9 +97,8 @@ main(
 		semop( param_ptr->sem_data_id, &sops, 1);
 		usleep(8);	// Wait 0.01 msec
 		// StartTimer();
-		part_index  = param_ptr->part_index;
-		page_index  = part_index % 2;	// 2 pages per cycle
-		// printf("... Ready to process Part=%d Page=%d\n", part_index, page_index);
+		page_index = param_ptr->buf_index % 2;			// 2 pages per cycle
+		printf("... Ready to process Part=%d Page=%d\n", param_ptr->buf_index, page_index);
 
 		//-------- SHM -> GPU memory transfer
 		cudaMemcpy( &cuvdifdata_ptr[HALFBUF* page_index], &vdifdata_ptr[HALFBUF* page_index], HALFBUF, cudaMemcpyHostToDevice);
@@ -126,7 +123,7 @@ main(
 		}
 
 		//-------- Dump cross spectra to shared memory
-		if( part_index == PARTNUM - 1){
+		if( param_ptr->buf_index == PARTNUM - 1){
 			cudaMemcpy(xspec_ptr, cuPowerSpec, NST* NFFT2* sizeof(float), cudaMemcpyDeviceToHost);
 			sops.sem_num = (ushort)SEM_FX; sops.sem_op = (short)1; sops.sem_flg = (short)0; semop( param_ptr->sem_data_id, &sops, 1);
 			for(index=0; index<param_ptr->num_st; index++){

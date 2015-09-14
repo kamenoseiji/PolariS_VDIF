@@ -25,7 +25,7 @@ main(
 	int		sock;						// Socket ID descriptor
 	int		frameID, prevFrameID;		// Frame ID
 	int		frame_addr;					// Write address in page
-	int		prev_part  = -1;			// Part Index
+	int		accum_index  = 0;			// Accumulated part Index
 	struct sockaddr_in	addr;			//  Socket Address
 	struct ip_mreq		mreq;			// Multicast Request
 	FILE	*dumpfile_ptr;				// Dump File
@@ -79,29 +79,27 @@ main(
 
 		//-------- Read VDIF packet
 		rv = recv(sock, buf, sizeof(buf), 0);
-		// if(argc > 1){
-		//  	fwrite(buf, VDIF_SIZE, 1, dumpfile_ptr);
-		// }
-		frameID    = (buf[5] << 16) + (buf[6] << 8) + buf[7];
-		if( frameID - prevFrameID > 1){
-			printf(" VDIF packet lost at %d\n", frameID);
+		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
+		if(argc > 1){
+		  	fwrite(buf, VDIF_SIZE, 1, dumpfile_ptr);
 		}
+		frameID    = (buf[5] << 16) + (buf[6] << 8) + buf[7];
 		param_ptr->part_index = frameID / FramePerPart;				// Part Number (0 - 7)
 		frame_addr = VDIFDATA_SIZE* (frameID % FramePerBUF);		// Write Address in BUF
-		memcpy( vdifhead_ptr, buf, VDIFHEAD_SIZE);
 		memcpy( &vdifdata_ptr[frame_addr], &buf[VDIFHEAD_SIZE], VDIFDATA_SIZE);
 
-		if( param_ptr->part_index == 0){param_ptr->validity |= ENABLE;}
-		if( (param_ptr->part_index != prev_part) && (param_ptr->validity & ENABLE)){
-			printf("Part%d : frame ID = %06d : frameAddr = %d \n", param_ptr->part_index, frameID, frame_addr);
-			sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)1; sops.sem_flg = (short)0;
-			semop(param_ptr->sem_data_id, &sops, 1);
-			sops.sem_num = (ushort)SEM_VDIF_POWER; sops.sem_op = (short)1; sops.sem_flg = (short)0;
-			semop(param_ptr->sem_data_id, &sops, 1);
-			prev_part = param_ptr->part_index;
+		if( frameID % FramePerPart == FramePerPart - 1){ 
+			accum_index ++;
+			if(accum_index > 8){
+				param_ptr->buf_index = param_ptr->part_index;			// Buffer Number (0 - 7)
+				printf("Part%d : frame ID = %06d : frameAddr = %d ", param_ptr->part_index, frameID, frame_addr);
+				param_ptr->validity |= ENABLE;
+				sops.sem_num = (ushort)SEM_VDIF_PART; sops.sem_op = (short)1; sops.sem_flg = (short)0;
+				semop(param_ptr->sem_data_id, &sops, 1);
+				sops.sem_num = (ushort)SEM_VDIF_POWER; sops.sem_op = (short)1; sops.sem_flg = (short)0;
+				semop(param_ptr->sem_data_id, &sops, 1);
+			}
 		}
-		prevFrameID = frameID;
-
 	}
 //------------------------------------------ Stop Sampling
 	fclose(dumpfile_ptr);

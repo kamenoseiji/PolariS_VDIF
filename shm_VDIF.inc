@@ -69,7 +69,7 @@ struct	SHM_PARAM{
 	int		shrd_xspec_id;		// Shared Memory ID
 	int		sem_data_id;		// Semaphore
 	int		part_index;			// Part in 1-sec data
-	int		dummy1;				// filler, reserved
+	int		buf_index;			// Buffered page index
 	int		dummy2;				// filler, reserved
 
 	//-------- Sampling Modes
